@@ -209,9 +209,9 @@ public void SaveGame(int client, int style)
 	Shavit_SaveCheckpointCache(client, client, g_aSavestates[client], -1, sizeof(g_aSavestates[client]));
 	Shavit_ClearCheckpoints(client);
 
-	WriteReplayHeader(file, style, 0, g_aSavestates[client].aSnapshot.fCurrentTime, GetSteamAccountID(client), g_aSavestates[client].iPreFrames, 0, fZoneOffset, iSize, g_fTickrate, g_sCurrentMap);
-	WriteReplayFrames(ReplayFrames, iSize, file, null);
-	delete file;
+	WriteReplayHeader(fFile, style, 0, g_aSavestates[client].aSnapshot.fCurrentTime, GetSteamAccountID(client), g_aSavestates[client].iPreFrames, 0, fZoneOffset, iSize, g_fTickrate, g_sCurrentMap);
+	WriteReplayFrames(ReplayFrames, iSize, fFile, null);
+	delete fFile;
 	delete ReplayFrames;
 
 	Shavit_StopTimer(client, true);
