@@ -13,16 +13,16 @@ chatstrings_t g_sChatStrings;
 stylestrings_t g_sStyleStrings[STYLE_LIMIT];
 
 bool g_bLate = false;
-
 Handle g_hSavesDB = INVALID_HANDLE;
-
 float g_fTickrate = 0.0;
 int g_iStyleCount;
+char g_sReplayFolder[PLATFORM_MAX_PATH];
+char g_sCurrentMap[255];
+
 bool g_bHasAnySaves[MAXPLAYERS+1];
 bool g_bHasSave[MAXPLAYERS+1][STYLE_LIMIT];
+float g_fSaveTime[MAXPLAYERS+1][STYLE_LIMIT] = {0.0, ...};
 bool g_bNotified[MAXPLAYERS+1];
-char g_sCurrentMap[255];
-char g_sReplayFolder[PLATFORM_MAX_PATH];
 
 public Plugin myinfo =
 {
@@ -41,6 +41,7 @@ public void OnPluginStart()
 	RegAdminCmd("sm_savegame", Command_SaveGame, ADMFLAG_GENERIC, "Save your timer state to load later");
 	RegAdminCmd("sm_savetimer", Command_SaveGame, ADMFLAG_GENERIC, "Save your timer state to load later");
 	RegAdminCmd("sm_savestate", Command_SaveGame, ADMFLAG_GENERIC, "Save your timer state to load later");
+	
 	RegAdminCmd("sm_loadgame", Command_LoadGame, ADMFLAG_GENERIC, "Load your saved timer state");
 	RegAdminCmd("sm_loadtimer", Command_LoadGame, ADMFLAG_GENERIC, "Load your saved timer state");
 	RegAdminCmd("sm_savestates", Command_LoadGame, ADMFLAG_GENERIC, "Save your timer state to load later");
@@ -125,7 +126,7 @@ public void SQL_InitSavesDB(Handle owner, Handle hndl, const char[] error, any d
 void GetClientSaves(int client)
 {
 	char Query[255];
-	FormatEx(Query, sizeof(Query), "SELECT `style` FROM `saves` WHERE auth = %i AND map = '%s';", GetSteamAccountID(client), g_sCurrentMap);
+	FormatEx(Query, sizeof(Query), "SELECT `style`, `TfCurrentTime` FROM `saves` WHERE auth = %i AND map = '%s';", GetSteamAccountID(client), g_sCurrentMap);
 	SQL_TQuery(g_hSavesDB, SQL_GetClientSaves, Query, client);
 }
 
@@ -142,7 +143,9 @@ public void SQL_GetClientSaves(Handle owner, Handle hndl, const char[] error, in
 		while(SQL_FetchRow(hndl))
 		{
 			int iStyle = SQL_FetchInt(hndl, 0);
+			float fTime = SQL_FetchFloat(hndl, 1);
 			g_bHasSave[client][iStyle] = true;
+			g_fSaveTime[client][iStyle] = fTime;
 		}
 	}
 }
@@ -262,13 +265,18 @@ public Action OpenOverwriteSaveMenu(int client, int style)
 {
 	Panel hPanel = CreatePanel();
 	char sDisplay[128];
+	char sTime[32];
+	FormatSeconds(g_fSaveTime[client][style], sTime, sizeof(sTime), false);
 
 	FormatEx(sDisplay, sizeof(sDisplay), "Found your saved game on %s", g_sCurrentMap);
 	hPanel.SetTitle(sDisplay);
 
 	FormatEx(sDisplay, sizeof(sDisplay), "Style: %s", g_sStyleStrings[style].sStyleName);
 	hPanel.DrawItem(sDisplay, ITEMDRAW_RAWLINE);
-	
+
+	FormatEx(sDisplay, sizeof(sDisplay), "Time: %s", sTime);
+	hPanel.DrawItem(sDisplay, ITEMDRAW_RAWLINE);
+
 	hPanel.DrawItem(" ", ITEMDRAW_RAWLINE);
 	hPanel.DrawItem("Overwrite?", ITEMDRAW_RAWLINE);
 	hPanel.DrawItem("Yes", ITEMDRAW_CONTROL);
@@ -355,14 +363,20 @@ void OpenLoadGameMenu(int client)
 	int[] styles = new int[g_iStyleCount];
 	Shavit_GetOrderedStyles(styles, g_iStyleCount);
 
+	int iStyle;
+	char sStyleID[4];
+	char sTime[32];
+	char sDisplay[128];
+	
 	for(int i = 0; i < g_iStyleCount; i++)
 	{
-		int iStyle = styles[i];
+		iStyle = styles[i];
 		if(g_bHasSave[client][iStyle])
 		{
-			char sStyleID[4];
 			IntToString(iStyle, sStyleID, sizeof(sStyleID));
-			menu.AddItem(sStyleID, g_sStyleStrings[iStyle].sStyleName);
+			FormatSeconds(g_fSaveTime[client][iStyle], sTime, sizeof(sTime), false);
+			FormatEx(sDisplay, sizeof(sDisplay), "%s - %s", g_sStyleStrings[iStyle].sStyleName, sTime);
+			menu.AddItem(sStyleID, sDisplay);
 		}
 	}
 
