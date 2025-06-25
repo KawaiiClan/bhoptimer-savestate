@@ -516,6 +516,7 @@ public void SQL_LoadGame(Handle owner, Handle hndl, const char[] error, any clie
 			Shavit_LoadCheckpointCache(client, g_aSavestates[client], -1, sizeof(g_aSavestates[client]), true);
 			Shavit_ChangeClientStyle(client, iStyle, true, false, true);
 			Shavit_SetReplayData(client, g_aReplayCache[client].aFrames);
+			Shavit_SetPlayerPreFrames(client, g_aReplayCache[client].iPreFrames);
 			DeleteLoadedGame(client, iStyle);
 			Shavit_PrintToChat(client, "Saved game %sloaded %ssuccessfully!", g_sChatStrings.sVariable, g_sChatStrings.sText);
 		}
