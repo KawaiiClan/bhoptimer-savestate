@@ -29,3 +29,4 @@
 - Add the ability to delete saved games without loading them
 - Add a command to see all of the maps you have a saved game on
 - Show the time in the `!loadgame` menu (as well as the other menus in TODO)
+- Maybe add checkpoint saving, instead of clearing. They are cleared because there were exploits that could be done with doing !savegame, saving checkpoints, then !loadgame.. maybe SetCurrentCheckpoint or forcing checkpoint deletions will be the fix.. but having checkpoints save between loads seems like a marginal use that may not be worth the risk anyway
