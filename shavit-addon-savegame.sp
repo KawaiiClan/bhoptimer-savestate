@@ -462,7 +462,7 @@ public void LoadGame(int client, int style)
 	
 	Shavit_ClearCheckpoints(client);
 	Shavit_StopTimer(client, true);
-	Shavit_ChangeClientStyle(client, style, true, true);
+	//Shavit_ChangeClientStyle(client, style, true, false, true); //i think this might be a good thing to have here as well? idk.. not sure yet
 	Shavit_SetReplayData(client, cache.aFrames);
 	
 	char Query[2048];
@@ -573,6 +573,7 @@ public void SQL_LoadGame(Handle owner, Handle hndl, const char[] error, any clie
 			}
 			Shavit_PrintToChat(client, "Saved game %sloaded %ssuccessfully!", g_sChatStrings.sVariable, g_sChatStrings.sText);
 			Shavit_LoadCheckpointCache(client, g_aSavestates[client], -1, sizeof(g_aSavestates[client]), true);
+			Shavit_ChangeClientStyle(client, iStyle, true, false, true);
 			DeleteLoadedGame(client, iStyle);
 		}
 	}
