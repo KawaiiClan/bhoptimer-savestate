@@ -102,16 +102,16 @@ public void OnClientPutInServer(int client)
 
 public Action InitSavesDB(Handle &DbHNDL)
 {
-	char Error[255];
-	DbHNDL = SQL_Connect("savegame", true, Error, sizeof(Error));
+	char sError[255];
+	DbHNDL = SQL_Connect("savegame", true, sError, sizeof(sError));
 	if(DbHNDL == INVALID_HANDLE)
-		SetFailState(Error);
+		SetFailState(sError);
 
 	else
 	{
-		char Query[4096];
-		FormatEx(Query, sizeof(Query), "CREATE TABLE IF NOT EXISTS `saves` (`map` varchar(100) NOT NULL, `auth` int NOT NULL, `style` int NOT NULL, `TbTimerEnabled` int NOT NULL, `TfCurrentTime` float NOT NULL, `TbClientPaused` int NOT NULL, `TiJumps` int NOT NULL, `TiStrafes` int NOT NULL, `TiTotalMeasures` int, `TiGoodGains` int, `TfServerTime` int NOT NULL, `TiKeyCombo` int NOT NULL, `TiTimerTrack` int NOT NULL, `TiMeasuredJumps` int, `TiPerfectJumps` int, `TfZoneOffset1` float, `TfZoneOffset2` float, `TfDistanceOffset1` float, `TfDistanceOffset2` float, `TfAvgVelocity` float, `TfMaxVelocity` float, `TfTimescale` float NOT NULL, `TiZoneIncrement` int, `TiFullTicks` int NOT NULL, `TiFractionalTicks` int NOT NULL, `TbPracticeMode` int NOT NULL, `TbJumped` int NOT NULL, `TbCanUseAllKeys` int NOT NULL, `TbOnGround` int NOT NULL, `TiLastButtons` int, `TfLastAngle` float, `TiLandingTick` int, `TiLastMoveType` int, `TfStrafeWarning` float, `TfLastInputVel1` float, `TfLastInputVel2` float, `Tfplayer_speedmod` float, `TfNextFrameTime` float, `TiLastMoveTypeTAS` int, `CfPosition1` float NOT NULL, `CfPosition2` float NOT NULL, `CfPosition3` float NOT NULL, `CfAngles1` float NOT NULL, `CfAngles2` float NOT NULL, `CfAngles3` float NOT NULL, `CfVelocity1` float NOT NULL, `CfVelocity2` float NOT NULL, `CfVelocity3` float NOT NULL, `CiMovetype` int NOT NULL, `CfGravity` float NOT NULL, `CfSpeed` float NOT NULL, `CfStamina` float NOT NULL, `CbDucked` int NOT NULL, `CbDucking` int NOT NULL, `CfDuckTime` float, `CfDuckSpeed` float, `CiFlags` int NOT NULL, `CsTargetname` varchar(64) NOT NULL, `CsClassname` varchar(64) NOT NULL, `CiPreFrames` int NOT NULL, `CbSegmented` int NOT NULL, `CiGroundEntity` int, `CvecLadderNormal1` float, `CvecLadderNormal2` float, `CvecLadderNormal3` float, `Cm_bHasWalkMovedSinceLastJump` int, `Cm_ignoreLadderJumpTime` float, `Cm_lastStandingPos1` float, `Cm_lastStandingPos2` float, `Cm_lastStandingPos3` float, `Cm_ladderSuppressionTimer1` float, `Cm_ladderSuppressionTimer2` float, `Cm_lastLadderNormal1` float, `Cm_lastLadderNormal2` float, `Cm_lastLadderNormal3` float, `Cm_lastLadderPos1` float, `Cm_lastLadderPos2` float, `Cm_lastLadderPos3` float, `Cm_afButtonDisabled` int, `Cm_afButtonForced` int, UNIQUE KEY `unique_index` (`map`,`auth`,`style`)) ENGINE=INNODB;");
-		SQL_TQuery(g_hSavesDB, SQL_InitSavesDB, Query);
+		char sQuery[4096];
+		FormatEx(sQuery, sizeof(sQuery), "CREATE TABLE IF NOT EXISTS `saves` (`map` varchar(100) NOT NULL, `auth` int NOT NULL, `style` int NOT NULL, `TbTimerEnabled` int NOT NULL, `TfCurrentTime` float NOT NULL, `TbClientPaused` int NOT NULL, `TiJumps` int NOT NULL, `TiStrafes` int NOT NULL, `TiTotalMeasures` int, `TiGoodGains` int, `TfServerTime` int NOT NULL, `TiKeyCombo` int NOT NULL, `TiTimerTrack` int NOT NULL, `TiMeasuredJumps` int, `TiPerfectJumps` int, `TfZoneOffset1` float, `TfZoneOffset2` float, `TfDistanceOffset1` float, `TfDistanceOffset2` float, `TfAvgVelocity` float, `TfMaxVelocity` float, `TfTimescale` float NOT NULL, `TiZoneIncrement` int, `TiFullTicks` int NOT NULL, `TiFractionalTicks` int NOT NULL, `TbPracticeMode` int NOT NULL, `TbJumped` int NOT NULL, `TbCanUseAllKeys` int NOT NULL, `TbOnGround` int NOT NULL, `TiLastButtons` int, `TfLastAngle` float, `TiLandingTick` int, `TiLastMoveType` int, `TfStrafeWarning` float, `TfLastInputVel1` float, `TfLastInputVel2` float, `Tfplayer_speedmod` float, `TfNextFrameTime` float, `TiLastMoveTypeTAS` int, `CfPosition1` float NOT NULL, `CfPosition2` float NOT NULL, `CfPosition3` float NOT NULL, `CfAngles1` float NOT NULL, `CfAngles2` float NOT NULL, `CfAngles3` float NOT NULL, `CfVelocity1` float NOT NULL, `CfVelocity2` float NOT NULL, `CfVelocity3` float NOT NULL, `CiMovetype` int NOT NULL, `CfGravity` float NOT NULL, `CfSpeed` float NOT NULL, `CfStamina` float NOT NULL, `CbDucked` int NOT NULL, `CbDucking` int NOT NULL, `CfDuckTime` float, `CfDuckSpeed` float, `CiFlags` int NOT NULL, `CsTargetname` varchar(64) NOT NULL, `CsClassname` varchar(64) NOT NULL, `CiPreFrames` int NOT NULL, `CbSegmented` int NOT NULL, `CiGroundEntity` int, `CvecLadderNormal1` float, `CvecLadderNormal2` float, `CvecLadderNormal3` float, `Cm_bHasWalkMovedSinceLastJump` int, `Cm_ignoreLadderJumpTime` float, `Cm_lastStandingPos1` float, `Cm_lastStandingPos2` float, `Cm_lastStandingPos3` float, `Cm_ladderSuppressionTimer1` float, `Cm_ladderSuppressionTimer2` float, `Cm_lastLadderNormal1` float, `Cm_lastLadderNormal2` float, `Cm_lastLadderNormal3` float, `Cm_lastLadderPos1` float, `Cm_lastLadderPos2` float, `Cm_lastLadderPos3` float, `Cm_afButtonDisabled` int, `Cm_afButtonForced` int, UNIQUE KEY `unique_index` (`map`,`auth`,`style`)) ENGINE=INNODB;");
+		SQL_TQuery(g_hSavesDB, SQL_InitSavesDB, sQuery);
 	}
 
 	return Plugin_Handled;
@@ -125,9 +125,9 @@ public void SQL_InitSavesDB(Handle owner, Handle hndl, const char[] error, any d
 
 void GetClientSaves(int client)
 {
-	char Query[255];
-	FormatEx(Query, sizeof(Query), "SELECT `style`, `TfCurrentTime` FROM `saves` WHERE auth = %i AND map = '%s';", GetSteamAccountID(client), g_sCurrentMap);
-	SQL_TQuery(g_hSavesDB, SQL_GetClientSaves, Query, client);
+	char sQuery[255];
+	FormatEx(sQuery, sizeof(sQuery), "SELECT `style`, `TfCurrentTime` FROM `saves` WHERE auth = %i AND map = '%s';", GetSteamAccountID(client), g_sCurrentMap);
+	SQL_TQuery(g_hSavesDB, SQL_GetClientSaves, sQuery, client);
 }
 
 public void SQL_GetClientSaves(Handle owner, Handle hndl, const char[] error, int client)
@@ -217,8 +217,8 @@ public void SaveGame(int client, int style)
 
 	Shavit_StopTimer(client, true);
 
-	char Query[8192];
-	FormatEx(Query, sizeof(Query), "REPLACE INTO `saves` (`map`, `auth`, `style`, `TbTimerEnabled`, `TfCurrentTime`, `TbClientPaused`, `TiJumps`, `TiStrafes`, `TiTotalMeasures`, `TiGoodGains`, `TfServerTime`, `TiKeyCombo`, `TiTimerTrack`, `TiMeasuredJumps`, `TiPerfectJumps`, `TfZoneOffset1`, `TfZoneOffset2`, `TfDistanceOffset1`, `TfDistanceOffset2`, `TfAvgVelocity`, `TfMaxVelocity`, `TfTimescale`, `TiZoneIncrement`, `TiFullTicks`, `TiFractionalTicks`, `TbPracticeMode`, `TbJumped`, `TbCanUseAllKeys`, `TbOnGround`, `TiLastButtons`, `TfLastAngle`, `TiLandingTick`, `TiLastMoveType`, `TfStrafeWarning`, `TfLastInputVel1`, `TfLastInputVel2`, `Tfplayer_speedmod`, `TfNextFrameTime`, `TiLastMoveTypeTAS`, `CfPosition1`, `CfPosition2`, `CfPosition3`, `CfAngles1`, `CfAngles2`, `CfAngles3`, `CfVelocity1`, `CfVelocity2`, `CfVelocity3`, `CiMovetype`, `CfGravity`, `CfSpeed`, `CfStamina`, `CbDucked`, `CbDucking`, `CfDuckTime`, `CfDuckSpeed`, `CiFlags`, `CsTargetname`, `CsClassname`, `CiPreFrames`, `CbSegmented`, `CiGroundEntity`, `CvecLadderNormal1`, `CvecLadderNormal2`, `CvecLadderNormal3`, `Cm_bHasWalkMovedSinceLastJump`, `Cm_ignoreLadderJumpTime`, `Cm_lastStandingPos1`, `Cm_lastStandingPos2`, `Cm_lastStandingPos3`, `Cm_ladderSuppressionTimer1`, `Cm_ladderSuppressionTimer2`,  `Cm_lastLadderNormal1`, `Cm_lastLadderNormal2`, `Cm_lastLadderNormal3`, `Cm_lastLadderPos1`, `Cm_lastLadderPos2`, `Cm_lastLadderPos3`, `Cm_afButtonDisabled`, `Cm_afButtonForced`) VALUES ('%s', '%i', '%i', '%i', '%f', '%i', '%i', '%i', '%i', '%i', '%f', '%i', '%i', '%i', '%i', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%f', '%i', '%i', '%f', '%f', '%f', '%f', '%f', '%i', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%i', '%f', '%f', '%f', '%i', '%i', '%f', '%f', '%i', '%s', '%s', '%i', '%i', '%i', '%f', '%f', '%f', '%i', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%i', '%i');",
+	char sQuery[8192];
+	FormatEx(sQuery, sizeof(sQuery), "REPLACE INTO `saves` (`map`, `auth`, `style`, `TbTimerEnabled`, `TfCurrentTime`, `TbClientPaused`, `TiJumps`, `TiStrafes`, `TiTotalMeasures`, `TiGoodGains`, `TfServerTime`, `TiKeyCombo`, `TiTimerTrack`, `TiMeasuredJumps`, `TiPerfectJumps`, `TfZoneOffset1`, `TfZoneOffset2`, `TfDistanceOffset1`, `TfDistanceOffset2`, `TfAvgVelocity`, `TfMaxVelocity`, `TfTimescale`, `TiZoneIncrement`, `TiFullTicks`, `TiFractionalTicks`, `TbPracticeMode`, `TbJumped`, `TbCanUseAllKeys`, `TbOnGround`, `TiLastButtons`, `TfLastAngle`, `TiLandingTick`, `TiLastMoveType`, `TfStrafeWarning`, `TfLastInputVel1`, `TfLastInputVel2`, `Tfplayer_speedmod`, `TfNextFrameTime`, `TiLastMoveTypeTAS`, `CfPosition1`, `CfPosition2`, `CfPosition3`, `CfAngles1`, `CfAngles2`, `CfAngles3`, `CfVelocity1`, `CfVelocity2`, `CfVelocity3`, `CiMovetype`, `CfGravity`, `CfSpeed`, `CfStamina`, `CbDucked`, `CbDucking`, `CfDuckTime`, `CfDuckSpeed`, `CiFlags`, `CsTargetname`, `CsClassname`, `CiPreFrames`, `CbSegmented`, `CiGroundEntity`, `CvecLadderNormal1`, `CvecLadderNormal2`, `CvecLadderNormal3`, `Cm_bHasWalkMovedSinceLastJump`, `Cm_ignoreLadderJumpTime`, `Cm_lastStandingPos1`, `Cm_lastStandingPos2`, `Cm_lastStandingPos3`, `Cm_ladderSuppressionTimer1`, `Cm_ladderSuppressionTimer2`,  `Cm_lastLadderNormal1`, `Cm_lastLadderNormal2`, `Cm_lastLadderNormal3`, `Cm_lastLadderPos1`, `Cm_lastLadderPos2`, `Cm_lastLadderPos3`, `Cm_afButtonDisabled`, `Cm_afButtonForced`) VALUES ('%s', '%i', '%i', '%i', '%f', '%i', '%i', '%i', '%i', '%i', '%f', '%i', '%i', '%i', '%i', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%f', '%i', '%i', '%f', '%f', '%f', '%f', '%f', '%i', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%i', '%f', '%f', '%f', '%i', '%i', '%f', '%f', '%i', '%s', '%s', '%i', '%i', '%i', '%f', '%f', '%f', '%i', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%i', '%i');",
 		g_sCurrentMap, GetSteamAccountID(client), g_aSavestates[client].aSnapshot.bsStyle, view_as<int>(g_aSavestates[client].aSnapshot.bTimerEnabled), g_aSavestates[client].aSnapshot.fCurrentTime, view_as<int>(g_aSavestates[client].aSnapshot.bClientPaused), g_aSavestates[client].aSnapshot.iJumps,
 		g_aSavestates[client].aSnapshot.iStrafes, g_aSavestates[client].aSnapshot.iTotalMeasures, g_aSavestates[client].aSnapshot.iGoodGains, g_aSavestates[client].aSnapshot.fServerTime, g_aSavestates[client].aSnapshot.iKeyCombo, g_aSavestates[client].aSnapshot.iTimerTrack, 
 		g_aSavestates[client].aSnapshot.iMeasuredJumps, g_aSavestates[client].aSnapshot.iPerfectJumps, g_aSavestates[client].aSnapshot.fZoneOffset[0], g_aSavestates[client].aSnapshot.fZoneOffset[1], 
@@ -243,7 +243,7 @@ public void SaveGame(int client, int style)
 		g_aSavestates[client].m_lastLadderNormal[0], g_aSavestates[client].m_lastLadderNormal[1], g_aSavestates[client].m_lastLadderNormal[2], 
 		g_aSavestates[client].m_lastLadderPos[0], g_aSavestates[client].m_lastLadderPos[1], g_aSavestates[client].m_lastLadderPos[2], 
 		g_aSavestates[client].m_afButtonDisabled, g_aSavestates[client].m_afButtonForced);
-	SQL_TQuery(g_hSavesDB, SQL_SaveGame, Query, client);
+	SQL_TQuery(g_hSavesDB, SQL_SaveGame, sQuery, client);
 }
 
 public void SQL_SaveGame(Handle owner, Handle hndl, const char[] error, any client)
@@ -359,8 +359,8 @@ public Action Command_LoadGame(int client, int args)
 void OpenLoadGameMenu(int client)
 {
 	Menu menu = new Menu(OpenLoadGameMenuHandler);
-	int[] styles = new int[g_iStyleCount];
-	Shavit_GetOrderedStyles(styles, g_iStyleCount);
+	int[] iOrderedStyles = new int[g_iStyleCount];
+	Shavit_GetOrderedStyles(iOrderedStyles, g_iStyleCount);
 	int iStyle;
 	char sStyleID[4];
 	char sTime[32];
@@ -371,7 +371,7 @@ void OpenLoadGameMenu(int client)
 
 	for(int i = 0; i < g_iStyleCount; i++)
 	{
-		iStyle = styles[i];
+		iStyle = iOrderedStyles[i];
 		if(g_bHasSave[client][iStyle])
 		{
 			IntToString(iStyle, sStyleID, sizeof(sStyleID));
@@ -421,9 +421,9 @@ public void LoadGame(int client, int style)
 	Shavit_ClearCheckpoints(client);
 	Shavit_StopTimer(client, true);
 
-	char Query[2048];
-	FormatEx(Query, sizeof(Query), "SELECT `style`, `TbTimerEnabled`, `TfCurrentTime`, `TbClientPaused`, `TiJumps`, `TiStrafes`, `TiTotalMeasures`, `TiGoodGains`, `TfServerTime`, `TiKeyCombo`, `TiTimerTrack`, `TiMeasuredJumps`, `TiPerfectJumps`, `TfZoneOffset1`, `TfZoneOffset2`, `TfDistanceOffset1`, `TfDistanceOffset2`, `TfAvgVelocity`, `TfMaxVelocity`, `TfTimescale`, `TiZoneIncrement`, `TiFullTicks`, `TiFractionalTicks`, `TbPracticeMode`, `TbJumped`, `TbCanUseAllKeys`, `TbOnGround`, `TiLastButtons`, `TfLastAngle`, `TiLandingTick`, `TiLastMoveType`, `TfStrafeWarning`, `TfLastInputVel1`, `TfLastInputVel2`, `Tfplayer_speedmod`, `TfNextFrameTime`, `TiLastMoveTypeTAS`, `CfPosition1`, `CfPosition2`, `CfPosition3`, `CfAngles1`, `CfAngles2`, `CfAngles3`, `CfVelocity1`, `CfVelocity2`, `CfVelocity3`, `CiMovetype`, `CfGravity`, `CfSpeed`, `CfStamina`, `CbDucked`, `CbDucking`, `CfDuckTime`, `CfDuckSpeed`, `CiFlags`, `CsTargetname`, `CsClassname`, `CiPreFrames`, `CbSegmented`, `CiGroundEntity`, `CvecLadderNormal1`, `CvecLadderNormal2`, `CvecLadderNormal3`, `Cm_bHasWalkMovedSinceLastJump`, `Cm_ignoreLadderJumpTime`, `Cm_lastStandingPos1`, `Cm_lastStandingPos2`, `Cm_lastStandingPos3`, `Cm_ladderSuppressionTimer1`, `Cm_ladderSuppressionTimer2`, `Cm_lastLadderNormal1`, `Cm_lastLadderNormal2`, `Cm_lastLadderNormal3`, `Cm_lastLadderPos1`, `Cm_lastLadderPos2`, `Cm_lastLadderPos3`, `Cm_afButtonDisabled`, `Cm_afButtonForced` FROM `saves` WHERE `map` = '%s' AND `auth` = %i AND `style` = %i;", g_sCurrentMap, GetSteamAccountID(client), style);
-	SQL_TQuery(g_hSavesDB, SQL_LoadGame, Query, client);
+	char sQuery[2048];
+	FormatEx(sQuery, sizeof(sQuery), "SELECT `style`, `TbTimerEnabled`, `TfCurrentTime`, `TbClientPaused`, `TiJumps`, `TiStrafes`, `TiTotalMeasures`, `TiGoodGains`, `TfServerTime`, `TiKeyCombo`, `TiTimerTrack`, `TiMeasuredJumps`, `TiPerfectJumps`, `TfZoneOffset1`, `TfZoneOffset2`, `TfDistanceOffset1`, `TfDistanceOffset2`, `TfAvgVelocity`, `TfMaxVelocity`, `TfTimescale`, `TiZoneIncrement`, `TiFullTicks`, `TiFractionalTicks`, `TbPracticeMode`, `TbJumped`, `TbCanUseAllKeys`, `TbOnGround`, `TiLastButtons`, `TfLastAngle`, `TiLandingTick`, `TiLastMoveType`, `TfStrafeWarning`, `TfLastInputVel1`, `TfLastInputVel2`, `Tfplayer_speedmod`, `TfNextFrameTime`, `TiLastMoveTypeTAS`, `CfPosition1`, `CfPosition2`, `CfPosition3`, `CfAngles1`, `CfAngles2`, `CfAngles3`, `CfVelocity1`, `CfVelocity2`, `CfVelocity3`, `CiMovetype`, `CfGravity`, `CfSpeed`, `CfStamina`, `CbDucked`, `CbDucking`, `CfDuckTime`, `CfDuckSpeed`, `CiFlags`, `CsTargetname`, `CsClassname`, `CiPreFrames`, `CbSegmented`, `CiGroundEntity`, `CvecLadderNormal1`, `CvecLadderNormal2`, `CvecLadderNormal3`, `Cm_bHasWalkMovedSinceLastJump`, `Cm_ignoreLadderJumpTime`, `Cm_lastStandingPos1`, `Cm_lastStandingPos2`, `Cm_lastStandingPos3`, `Cm_ladderSuppressionTimer1`, `Cm_ladderSuppressionTimer2`, `Cm_lastLadderNormal1`, `Cm_lastLadderNormal2`, `Cm_lastLadderNormal3`, `Cm_lastLadderPos1`, `Cm_lastLadderPos2`, `Cm_lastLadderPos3`, `Cm_afButtonDisabled`, `Cm_afButtonForced` FROM `saves` WHERE `map` = '%s' AND `auth` = %i AND `style` = %i;", g_sCurrentMap, GetSteamAccountID(client), style);
+	SQL_TQuery(g_hSavesDB, SQL_LoadGame, sQuery, client);
 }
 
 public void SQL_LoadGame(Handle owner, Handle hndl, const char[] error, any client)
@@ -525,21 +525,22 @@ public void SQL_LoadGame(Handle owner, Handle hndl, const char[] error, any clie
 				g_aSavestates[client].m_afButtonDisabled = SQL_FetchInt(hndl, 76);
 				g_aSavestates[client].m_afButtonForced = SQL_FetchInt(hndl, 77);
 			}
+			//TODO: if Shavit_SetReplayData is called before Shavit_LoadCheckpointCache, then it will run Shavit_SetPlayerPreFrames.. re-order these and test
 			Shavit_LoadCheckpointCache(client, g_aSavestates[client], -1, sizeof(g_aSavestates[client]), true);
 			Shavit_ChangeClientStyle(client, iStyle, true, false, true);
 			Shavit_SetReplayData(client, g_aReplayCache[client].aFrames);
 			Shavit_SetPlayerPreFrames(client, g_aReplayCache[client].iPreFrames);
 			DeleteLoadedGame(client, iStyle);
-			Shavit_PrintToChat(client, "Saved game %sloaded %ssuccessfully!", g_sChatStrings.sVariable, g_sChatStrings.sText);
+			Shavit_PrintToChat(client, "Saved game %sloaded %ssuccessfully and deleted!", g_sChatStrings.sVariable, g_sChatStrings.sText);
 		}
 	}
 }
 
 void DeleteLoadedGame(int client, int iStyle)
 {
-	char Query[512];
-	FormatEx(Query, sizeof(Query), "DELETE FROM `saves` WHERE auth = %i AND map = '%s' AND style = %i;", GetSteamAccountID(client), g_sCurrentMap, iStyle);
-	SQL_TQuery(g_hSavesDB, SQL_DeleteLoadedGame, Query, client);
+	char sQuery[512];
+	FormatEx(sQuery, sizeof(sQuery), "DELETE FROM `saves` WHERE auth = %i AND map = '%s' AND style = %i;", GetSteamAccountID(client), g_sCurrentMap, iStyle);
+	SQL_TQuery(g_hSavesDB, SQL_DeleteLoadedGame, sQuery, client);
 }
 
 public void SQL_DeleteLoadedGame(Handle owner, Handle hndl, const char[] error, int client)
