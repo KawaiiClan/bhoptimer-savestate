@@ -8,6 +8,7 @@
 #pragma semicolon 1
 
 cp_cache_t g_aSavestates[MAXPLAYERS+1];
+frame_cache_t g_aReplayCache[MAXPLAYERS+1];
 chatstrings_t g_sChatStrings;
 stylestrings_t g_sStyleStrings[STYLE_LIMIT];
 
@@ -437,23 +438,7 @@ public void LoadGame(int client, int style)
 	char sPath[PLATFORM_MAX_PATH];
 	FormatEx(sPath, sizeof(sPath), "%s/savedgames/%s_%i_%i.replay", g_sReplayFolder, g_sCurrentMap, style, GetSteamAccountID(client));
 	
-	replay_header_t header;
-	frame_cache_t cache;
-	
-	File file = ReadReplayHeader(sPath, header, style, 0);
-	if (file != null)
-	{
-		if (header.iReplayVersion > REPLAY_FORMAT_SUBVERSION)
-		{
-			// not going to try and read it
-		}
-		else if (header.iReplayVersion < 0x03 || (StrEqual(header.sMap, g_sCurrentMap, false) && header.iStyle == style && header.iTrack == 0))
-		{
-			ReadReplayFrames(file, header, cache);
-		}
-
-		delete file;
-	}
+	LoadReplayCache(g_aReplayCache[client], style, 0, sPath, g_sCurrentMap);
 	
 	if(FileExists(sPath))
 	{
@@ -463,7 +448,6 @@ public void LoadGame(int client, int style)
 	Shavit_ClearCheckpoints(client);
 	Shavit_StopTimer(client, true);
 	//Shavit_ChangeClientStyle(client, style, true, false, true); //i think this might be a good thing to have here as well? idk.. not sure yet
-	Shavit_SetReplayData(client, cache.aFrames);
 	
 	char Query[2048];
 	Format(Query, sizeof(Query), "SELECT `style`, `TbTimerEnabled`, `TfCurrentTime`, `TbClientPaused`, `TiJumps`, `TiStrafes`, `TiTotalMeasures`, `TiGoodGains`, `TfServerTime`, `TiKeyCombo`, `TiTimerTrack`, `TiMeasuredJumps`, `TiPerfectJumps`, `TfZoneOffset1`, `TfZoneOffset2`, `TfDistanceOffset1`, `TfDistanceOffset2`, `TfAvgVelocity`, `TfMaxVelocity`, `TfTimescale`, `TiZoneIncrement`, `TiFullTicks`, `TiFractionalTicks`, `TbPracticeMode`, `TbJumped`, `TbCanUseAllKeys`, `TbOnGround`, `TiLastButtons`, `TfLastAngle`, `TiLandingTick`, `TiLastMoveType`, `TfStrafeWarning`, `TfLastInputVel1`, `TfLastInputVel2`, `Tfplayer_speedmod`, `TfNextFrameTime`, `TiLastMoveTypeTAS`, `CfPosition1`, `CfPosition2`, `CfPosition3`, `CfAngles1`, `CfAngles2`, `CfAngles3`, `CfVelocity1`, `CfVelocity2`, `CfVelocity3`, `CiMovetype`, `CfGravity`, `CfSpeed`, `CfStamina`, `CbDucked`, `CbDucking`, `CfDuckTime`, `CfDuckSpeed`, `CiFlags`, `CsTargetname`, `CsClassname`, `CiPreFrames`, `CbSegmented`, `CiGroundEntity`, `CvecLadderNormal1`, `CvecLadderNormal2`, `CvecLadderNormal3`, `Cm_bHasWalkMovedSinceLastJump`, `Cm_ignoreLadderJumpTime`, `Cm_lastStandingPos1`, `Cm_lastStandingPos2`, `Cm_lastStandingPos3`, `Cm_ladderSuppressionTimer1`, `Cm_ladderSuppressionTimer2`, `Cm_lastLadderNormal1`, `Cm_lastLadderNormal2`, `Cm_lastLadderNormal3`, `Cm_lastLadderPos1`, `Cm_lastLadderPos2`, `Cm_lastLadderPos3`, `Cm_afButtonDisabled`, `Cm_afButtonForced` FROM `saves` WHERE `map` = '%s' AND `auth` = %i AND `style` = %i;", g_sCurrentMap, GetSteamAccountID(client), style);
@@ -573,6 +557,7 @@ public void SQL_LoadGame(Handle owner, Handle hndl, const char[] error, any clie
 			}
 			Shavit_LoadCheckpointCache(client, g_aSavestates[client], -1, sizeof(g_aSavestates[client]), true);
 			Shavit_ChangeClientStyle(client, iStyle, true, false, true);
+			Shavit_SetReplayData(client, g_aReplayCache[client].aFrames);
 			DeleteLoadedGame(client, iStyle);
 			Shavit_PrintToChat(client, "Saved game %sloaded %ssuccessfully!", g_sChatStrings.sVariable, g_sChatStrings.sText);
 		}
