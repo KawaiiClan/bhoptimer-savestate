@@ -35,20 +35,15 @@ public Plugin myinfo =
 
 public void OnPluginStart()
 {
+	InitSavesDB(g_hSavesDB);
 	g_fTickrate = (1.0 / GetTickInterval());
 
 	RegAdminCmd("sm_savegame", Command_SaveGame, ADMFLAG_GENERIC, "Save your timer state to load later");
+	RegAdminCmd("sm_savetimer", Command_SaveGame, ADMFLAG_GENERIC, "Save your timer state to load later");
+	RegAdminCmd("sm_savestate", Command_SaveGame, ADMFLAG_GENERIC, "Save your timer state to load later");
 	RegAdminCmd("sm_loadgame", Command_LoadGame, ADMFLAG_GENERIC, "Load your saved timer state");
-	/*RegConsoleCmd("sm_savetimer", Command_SaveGame, "Save your timer state to load later");
-	RegConsoleCmd("sm_savestate", Command_SaveGame, "Save your timer state to load later");
-	RegConsoleCmd("sm_saves", Command_LoadGame, "Save your timer state to load later");
-	RegConsoleCmd("sm_savestates", Command_LoadGame, "Save your timer state to load later");
-	RegConsoleCmd("sm_loadtimer", Command_LoadGame, "Load your saved timer state");
-	RegConsoleCmd("sm_restore", Command_LoadGame, "Load your saved timer state");
-	RegConsoleCmd("sm_restoregame", Command_LoadGame, "Load your saved timer state");
-	RegConsoleCmd("sm_restoretimer", Command_LoadGame, "Load your saved timer state");*/
-
-	InitSavesDB(g_hSavesDB);
+	RegAdminCmd("sm_loadtimer", Command_LoadGame, ADMFLAG_GENERIC, "Load your saved timer state");
+	RegAdminCmd("sm_savestates", Command_LoadGame, ADMFLAG_GENERIC, "Save your timer state to load later");
 
 	if(g_bLate)
 	{
