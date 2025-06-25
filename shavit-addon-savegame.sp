@@ -269,7 +269,7 @@ public Action OpenOverwriteSaveMenu(int client, int style)
 	char sTime[32];
 	FormatSeconds(g_fSaveTime[client][style], sTime, sizeof(sTime), false);
 
-	FormatEx(sDisplay, sizeof(sDisplay), "Found your saved game on %s", g_sCurrentMap);
+	FormatEx(sDisplay, sizeof(sDisplay), "You have a saved game on %s", g_sCurrentMap);
 	hPanel.SetTitle(sDisplay);
 
 	FormatEx(sDisplay, sizeof(sDisplay), "Style: %s", g_sStyleStrings[style].sStyleName);
@@ -359,16 +359,16 @@ public Action Command_LoadGame(int client, int args)
 void OpenLoadGameMenu(int client)
 {
 	Menu menu = new Menu(OpenLoadGameMenuHandler);
-	menu.SetTitle("Choose a save to load\n ");
-
 	int[] styles = new int[g_iStyleCount];
 	Shavit_GetOrderedStyles(styles, g_iStyleCount);
-
 	int iStyle;
 	char sStyleID[4];
 	char sTime[32];
 	char sDisplay[128];
-	
+
+	FormatEx(sDisplay, sizeof(sDisplay), "%s\nChoose a save to load\n ", g_sCurrentMap);
+	menu.SetTitle(sDisplay);
+
 	for(int i = 0; i < g_iStyleCount; i++)
 	{
 		iStyle = styles[i];
