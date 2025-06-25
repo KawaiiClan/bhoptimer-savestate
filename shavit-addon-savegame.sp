@@ -571,10 +571,10 @@ public void SQL_LoadGame(Handle owner, Handle hndl, const char[] error, any clie
 				g_aSavestates[client].m_afButtonDisabled = SQL_FetchInt(hndl, 76);
 				g_aSavestates[client].m_afButtonForced = SQL_FetchInt(hndl, 77);
 			}
-			Shavit_PrintToChat(client, "Saved game %sloaded %ssuccessfully!", g_sChatStrings.sVariable, g_sChatStrings.sText);
 			Shavit_LoadCheckpointCache(client, g_aSavestates[client], -1, sizeof(g_aSavestates[client]), true);
 			Shavit_ChangeClientStyle(client, iStyle, true, false, true);
 			DeleteLoadedGame(client, iStyle);
+			Shavit_PrintToChat(client, "Saved game %sloaded %ssuccessfully!", g_sChatStrings.sVariable, g_sChatStrings.sText);
 		}
 	}
 }
