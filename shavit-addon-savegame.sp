@@ -202,6 +202,8 @@ public void SaveGame(int client, int style)
 	fZoneOffset[1] = g_aSavestates[client].aSnapshot.fZoneOffset[1];
 
 	Shavit_SaveCheckpointCache(client, client, g_aSavestates[client], -1, sizeof(g_aSavestates[client]));
+	g_aSavestates[client].iPreFrames = Shavit_GetPlayerPreFrames(client);
+	
 	Shavit_ClearCheckpoints(client);
 
 	WriteReplayHeader(fFile, style, 0, g_aSavestates[client].aSnapshot.fCurrentTime, GetSteamAccountID(client), g_aSavestates[client].iPreFrames, 0, fZoneOffset, iSize, g_fTickrate, g_sCurrentMap);
