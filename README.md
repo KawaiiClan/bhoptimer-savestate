@@ -1,6 +1,7 @@
 # bhoptimer-SaveGame
-- Allows the use of !savegame and !loadgame to save/load timer states between map changes and server restarts!
-- Data is deleted as soon as it is loaded, so there is no way to exploit this as some sort of checkpoint system. It is the same usage as savestates, but now with even more persistence!
+## Allows the use of !savegame and !loadgame to save/load timer states between map changes and server restarts!
+- When a player does !savegame, their timer state and replay frames are saved in the database/replay file folder respectively. Their timer is stopped, and they can continue to play on the server.
+- Data is deleted as soon as the data is loaded, so there is no way to exploit this as some sort of checkpoint system. It is the same functionality as savestates, but now with even more persistence!
 
 **Very early version, limited to admin commands currently. functionality is confirmed, but there are likely some bugs that need testing to find.**
 
