@@ -11,3 +11,13 @@
 ### Usage
 - !savegame - Saves current progress in the map (writes timer state to db, and replay frames to `<replayfolder>/savedgames/<mapname>_<styleid>_<steamid>.replay`)
 - !loadgame - Opens a menu with options to select which saved game you'd like to resume on the current map (you can save one per style per map)
+
+### Screenshots
+- Saving and loading messages
+<br>![image](https://github.com/user-attachments/assets/89b272cd-5341-4a52-937c-b367ca82ef23)
+
+- It will let you know if you have a save on the current map on your first spawn
+<br>![image](https://github.com/user-attachments/assets/dc149910-caf0-4a4f-a65d-65ca59f86e73)
+
+- !loadgame menu
+<br>![image](https://github.com/user-attachments/assets/d37e7a4e-e36c-4ccb-af66-843a74b11283)
