@@ -136,6 +136,7 @@ public void SQL_GetClientSaves(Handle owner, Handle hndl, const char[] error, in
 	g_bNotified[client] = false;
 	for(int i = 0; i <= g_iStyleCount; i++)
 		g_bHasSave[client][i] = false;
+		g_fSaveTime[client][i] = 0.0;
 
 	if(SQL_GetRowCount(hndl) != 0)
 	{
