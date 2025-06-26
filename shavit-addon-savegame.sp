@@ -21,7 +21,7 @@ char g_sCurrentMap[255];
 
 bool g_bHasAnySaves[MAXPLAYERS+1];
 bool g_bHasSave[MAXPLAYERS+1][STYLE_LIMIT];
-float g_fSaveTime[MAXPLAYERS+1][STYLE_LIMIT] = {0.0, ...};
+float g_fSaveTime[MAXPLAYERS+1][STYLE_LIMIT];
 bool g_bNotified[MAXPLAYERS+1];
 
 public Plugin myinfo =
@@ -38,13 +38,13 @@ public void OnPluginStart()
 	InitSavesDB(g_hSavesDB);
 	g_fTickrate = (1.0 / GetTickInterval());
 
-	RegAdminCmd("sm_savegame", Command_SaveGame, ADMFLAG_GENERIC, "Save your timer state to load later");
-	RegAdminCmd("sm_savetimer", Command_SaveGame, ADMFLAG_GENERIC, "Save your timer state to load later");
-	RegAdminCmd("sm_savestate", Command_SaveGame, ADMFLAG_GENERIC, "Save your timer state to load later");
-	
-	RegAdminCmd("sm_loadgame", Command_LoadGame, ADMFLAG_GENERIC, "Load your saved timer state");
-	RegAdminCmd("sm_loadtimer", Command_LoadGame, ADMFLAG_GENERIC, "Load your saved timer state");
-	RegAdminCmd("sm_savestates", Command_LoadGame, ADMFLAG_GENERIC, "Save your timer state to load later");
+	RegConsoleCmd("sm_savegame", Command_SaveGame, "Save your timer state to load later");
+	RegConsoleCmd("sm_savetimer", Command_SaveGame, "Save your timer state to load later");
+	RegConsoleCmd("sm_savestate", Command_SaveGame, "Save your timer state to load later");
+
+	RegConsoleCmd("sm_loadgame", Command_LoadGame, "Load your saved timer state");
+	RegConsoleCmd("sm_loadtimer", Command_LoadGame, "Load your saved timer state");
+	RegConsoleCmd("sm_savestates", Command_LoadGame, "Save your timer state to load later");
 
 	if(g_bLate)
 	{
@@ -135,8 +135,10 @@ public void SQL_GetClientSaves(Handle owner, Handle hndl, const char[] error, in
 	g_bHasAnySaves[client] = false;
 	g_bNotified[client] = false;
 	for(int i = 0; i <= g_iStyleCount; i++)
+	{
 		g_bHasSave[client][i] = false;
 		g_fSaveTime[client][i] = 0.0;
+	}
 
 	if(SQL_GetRowCount(hndl) != 0)
 	{
