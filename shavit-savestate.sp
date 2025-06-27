@@ -47,6 +47,7 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_savestates", Command_Savestate, "Save or load a timer state");
 	RegConsoleCmd("sm_savegame", Command_Savestate, "Save or load a timer state");
 	RegConsoleCmd("sm_savetimer", Command_Savestate, "Save or load a timer state");
+	RegConsoleCmd("sm_load", Command_Savestate, "Save or load a timer state");
 	RegConsoleCmd("sm_loadgame", Command_Savestate, "Save or load a timer state");
 	RegConsoleCmd("sm_loadtimer", Command_Savestate, "Save or load a timer state");
 	
