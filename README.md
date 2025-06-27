@@ -10,6 +10,9 @@
 - Create an entry for "savegame" in `/addons/sourcemod/configs/databases.cfg`
 - Load the plugin to create the database structure automatically (only one `saves` table, many columns)
 
+### ConVars
+- shavit_savestate_savereplayoverwr (`0/1`) - Whether or not to save replay frames if player's time is longer than the WR (useful with things like !myreplay)
+
 ### Usage
 - !savestate - Opens a menu to save/load a savestate, or view all savestates. (Writes timer state to db, and replay frames to `<replayfolder>/savedgames/<mapname>_<styleid>_<steamid>.replay`) if a save exists for the player on the current map and style, a confirmation to overwrite the current save will appear.
 
