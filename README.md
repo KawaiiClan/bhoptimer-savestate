@@ -6,17 +6,20 @@
 - When a player saves a savestate, their timer state and replay frames are saved in the database and replay file folder respectively. Their timer is stopped (to prevent checkpoint-like usage), and they can continue to play on the server like normal.
 - It is currently (and probably always will be) limited to the `Main` track only. There aren't really any bonuses that would warrant this functionality, and it just opens up more possibilities for bloat files.
 
-### Installation
+### Note
+If you run multiple servers from the same directory (ie. public and private servers), and they share a savestate db, you can load saves between them seamlessly!
+
+## Installation
 - Create an entry for "savegame" in `/addons/sourcemod/configs/databases.cfg`
 - Load the plugin to create the database structure automatically (only one `saves` table, many columns)
 
-### ConVars
+## ConVars
 - `shavit_savestate_savereplayoverwr` (0 / 1) - Whether or not to save replay frames if player's time is longer than the WR (useful with things like !myreplay)
 
-### Usage
+## Usage
 - !savestate - Opens a menu to save/load a savestate, or view all savestates. (Writes timer state to db, and replay frames to `<replayfolder>/savedgames/<mapname>_<styleid>_<steamid>.replay`) if a save exists for the player on the current map and style, a confirmation to overwrite the current save will appear.
 
-### Screenshots
+## Screenshots
 - Main menu
 <br>![Screenshot from 2025-06-27 12-20-10](https://github.com/user-attachments/assets/032c0baf-20de-428b-aad1-97145bd24e94)
 
@@ -35,7 +38,6 @@
 - Overwrite confirmation
 <br>![Screenshot from 2025-06-27 12-23-32](https://github.com/user-attachments/assets/d9a16c76-3514-4574-ae3c-e45a18288bd0)
 
-
-### TODO
+## TODO
 - Add the ability to delete saved games without loading them
 - Maybe add checkpoint saving, instead of clearing. They are cleared because there were exploits that could be done with doing !savegame, saving checkpoints, then !loadgame.. maybe SetCurrentCheckpoint or forcing checkpoint deletions will be the fix.. but having checkpoints save between loads seems like a marginal use that may not be worth the risk/effort anyway
