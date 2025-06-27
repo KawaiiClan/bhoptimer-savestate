@@ -2,7 +2,7 @@
 ## Allows the use of !savestate to save/load [bhoptimer](https://github.com/shavitush/bhoptimer) timer states between map changes and server restarts!
 
 **Very early version, functionality has been confirmed with no current bugs/exploits found, but more testing is needed. Please open a PR or let me know of any issues, ty!**
-
+- Players may have one savestate on each style per map
 - When a player saves a savestate, their timer state and replay frames are saved in the database and replay file folder respectively. Their timer is stopped (to prevent checkpoint-like usage), and they can continue to play on the server like normal.
 - It is currently (and probably always will be) limited to the `Main` track only. There aren't really any bonuses that would warrant this functionality, and it just opens up more possibilities for bloat files.
 
