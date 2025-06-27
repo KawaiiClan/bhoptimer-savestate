@@ -596,6 +596,7 @@ public void SQL_LoadGame(Handle owner, Handle hndl, const char[] error, any clie
 				g_aSavestates[client].m_afButtonDisabled = SQL_FetchInt(hndl, 76);
 				g_aSavestates[client].m_afButtonForced = SQL_FetchInt(hndl, 77);
 			}
+			g_aSavestates[client].iSteamID = GetSteamAccountID(client);
 			Shavit_ClearCheckpoints(client);
 			Shavit_StopTimer(client, true);
 			Shavit_SetReplayData(client, g_aReplayCache[client].aFrames);
