@@ -17,16 +17,18 @@ Handle g_hSavesDB = INVALID_HANDLE;
 float g_fTickrate = 0.0;
 int g_iStyleCount;
 char g_sReplayFolder[PLATFORM_MAX_PATH];
-char g_sCurrentMap[255];
+char g_sCurrentMap[128];
 
 bool g_bHasAnySaves[MAXPLAYERS+1];
+bool g_bHasCurrentMapSaves[MAXPLAYERS+1];
 bool g_bHasSave[MAXPLAYERS+1][STYLE_LIMIT];
 float g_fSaveTime[MAXPLAYERS+1][STYLE_LIMIT];
+int g_iSaveDate[MAXPLAYERS+1][STYLE_LIMIT];
 bool g_bNotified[MAXPLAYERS+1];
 
 public Plugin myinfo =
 {
-	name = "[shavit] Save Game",
+	name = "[shavit] Savestate",
 	author = "olivia",
 	description = "Allow saving and loading savestates in shavit's bhoptimer",
 	version = "c:",
@@ -38,13 +40,13 @@ public void OnPluginStart()
 	InitSavesDB(g_hSavesDB);
 	g_fTickrate = (1.0 / GetTickInterval());
 
-	RegConsoleCmd("sm_savegame", Command_SaveGame, "Save your timer state to load later");
-	RegConsoleCmd("sm_savetimer", Command_SaveGame, "Save your timer state to load later");
-	RegConsoleCmd("sm_savestate", Command_SaveGame, "Save your timer state to load later");
-
-	RegConsoleCmd("sm_loadgame", Command_LoadGame, "Load your saved timer state");
-	RegConsoleCmd("sm_loadtimer", Command_LoadGame, "Load your saved timer state");
-	RegConsoleCmd("sm_savestates", Command_LoadGame, "Save your timer state to load later");
+	RegConsoleCmd("sm_savestate", Command_Savestate, "Save or load a timer state");
+	RegConsoleCmd("sm_savestates", Command_Savestate, "Save or load a timer state");
+	RegConsoleCmd("sm_savegame", Command_Savestate, "Save or load a timer state");
+	RegConsoleCmd("sm_savetimer", Command_Savestate, "Save or load a timer state");
+	RegConsoleCmd("sm_loadgame", Command_Savestate, "Save or load a timer state");
+	RegConsoleCmd("sm_loadtimer", Command_Savestate, "Save or load a timer state");
+	
 
 	if(g_bLate)
 	{
@@ -110,7 +112,7 @@ public Action InitSavesDB(Handle &DbHNDL)
 	else
 	{
 		char sQuery[4096];
-		FormatEx(sQuery, sizeof(sQuery), "CREATE TABLE IF NOT EXISTS `saves` (`map` varchar(100) NOT NULL, `auth` int NOT NULL, `style` int NOT NULL, `TbTimerEnabled` int NOT NULL, `TfCurrentTime` float NOT NULL, `TbClientPaused` int NOT NULL, `TiJumps` int NOT NULL, `TiStrafes` int NOT NULL, `TiTotalMeasures` int, `TiGoodGains` int, `TfServerTime` int NOT NULL, `TiKeyCombo` int NOT NULL, `TiTimerTrack` int NOT NULL, `TiMeasuredJumps` int, `TiPerfectJumps` int, `TfZoneOffset1` float, `TfZoneOffset2` float, `TfDistanceOffset1` float, `TfDistanceOffset2` float, `TfAvgVelocity` float, `TfMaxVelocity` float, `TfTimescale` float NOT NULL, `TiZoneIncrement` int, `TiFullTicks` int NOT NULL, `TiFractionalTicks` int NOT NULL, `TbPracticeMode` int NOT NULL, `TbJumped` int NOT NULL, `TbCanUseAllKeys` int NOT NULL, `TbOnGround` int NOT NULL, `TiLastButtons` int, `TfLastAngle` float, `TiLandingTick` int, `TiLastMoveType` int, `TfStrafeWarning` float, `TfLastInputVel1` float, `TfLastInputVel2` float, `Tfplayer_speedmod` float, `TfNextFrameTime` float, `TiLastMoveTypeTAS` int, `CfPosition1` float NOT NULL, `CfPosition2` float NOT NULL, `CfPosition3` float NOT NULL, `CfAngles1` float NOT NULL, `CfAngles2` float NOT NULL, `CfAngles3` float NOT NULL, `CfVelocity1` float NOT NULL, `CfVelocity2` float NOT NULL, `CfVelocity3` float NOT NULL, `CiMovetype` int NOT NULL, `CfGravity` float NOT NULL, `CfSpeed` float NOT NULL, `CfStamina` float NOT NULL, `CbDucked` int NOT NULL, `CbDucking` int NOT NULL, `CfDuckTime` float, `CfDuckSpeed` float, `CiFlags` int NOT NULL, `CsTargetname` varchar(64) NOT NULL, `CsClassname` varchar(64) NOT NULL, `CiPreFrames` int NOT NULL, `CbSegmented` int NOT NULL, `CiGroundEntity` int, `CvecLadderNormal1` float, `CvecLadderNormal2` float, `CvecLadderNormal3` float, `Cm_bHasWalkMovedSinceLastJump` int, `Cm_ignoreLadderJumpTime` float, `Cm_lastStandingPos1` float, `Cm_lastStandingPos2` float, `Cm_lastStandingPos3` float, `Cm_ladderSuppressionTimer1` float, `Cm_ladderSuppressionTimer2` float, `Cm_lastLadderNormal1` float, `Cm_lastLadderNormal2` float, `Cm_lastLadderNormal3` float, `Cm_lastLadderPos1` float, `Cm_lastLadderPos2` float, `Cm_lastLadderPos3` float, `Cm_afButtonDisabled` int, `Cm_afButtonForced` int, UNIQUE KEY `unique_index` (`map`,`auth`,`style`)) ENGINE=INNODB;");
+		FormatEx(sQuery, sizeof(sQuery), "CREATE TABLE IF NOT EXISTS `saves` (`map` varchar(100) NOT NULL, `auth` int NOT NULL, `style` int NOT NULL, `date` int NOT NULL, `TbTimerEnabled` int NOT NULL, `TfCurrentTime` float NOT NULL, `TbClientPaused` int NOT NULL, `TiJumps` int NOT NULL, `TiStrafes` int NOT NULL, `TiTotalMeasures` int, `TiGoodGains` int, `TfServerTime` int NOT NULL, `TiKeyCombo` int NOT NULL, `TiTimerTrack` int NOT NULL, `TiMeasuredJumps` int, `TiPerfectJumps` int, `TfZoneOffset1` float, `TfZoneOffset2` float, `TfDistanceOffset1` float, `TfDistanceOffset2` float, `TfAvgVelocity` float, `TfMaxVelocity` float, `TfTimescale` float NOT NULL, `TiZoneIncrement` int, `TiFullTicks` int NOT NULL, `TiFractionalTicks` int NOT NULL, `TbPracticeMode` int NOT NULL, `TbJumped` int NOT NULL, `TbCanUseAllKeys` int NOT NULL, `TbOnGround` int NOT NULL, `TiLastButtons` int, `TfLastAngle` float, `TiLandingTick` int, `TiLastMoveType` int, `TfStrafeWarning` float, `TfLastInputVel1` float, `TfLastInputVel2` float, `Tfplayer_speedmod` float, `TfNextFrameTime` float, `TiLastMoveTypeTAS` int, `CfPosition1` float NOT NULL, `CfPosition2` float NOT NULL, `CfPosition3` float NOT NULL, `CfAngles1` float NOT NULL, `CfAngles2` float NOT NULL, `CfAngles3` float NOT NULL, `CfVelocity1` float NOT NULL, `CfVelocity2` float NOT NULL, `CfVelocity3` float NOT NULL, `CiMovetype` int NOT NULL, `CfGravity` float NOT NULL, `CfSpeed` float NOT NULL, `CfStamina` float NOT NULL, `CbDucked` int NOT NULL, `CbDucking` int NOT NULL, `CfDuckTime` float, `CfDuckSpeed` float, `CiFlags` int NOT NULL, `CsTargetname` varchar(64) NOT NULL, `CsClassname` varchar(64) NOT NULL, `CiPreFrames` int NOT NULL, `CbSegmented` int NOT NULL, `CiGroundEntity` int, `CvecLadderNormal1` float, `CvecLadderNormal2` float, `CvecLadderNormal3` float, `Cm_bHasWalkMovedSinceLastJump` int, `Cm_ignoreLadderJumpTime` float, `Cm_lastStandingPos1` float, `Cm_lastStandingPos2` float, `Cm_lastStandingPos3` float, `Cm_ladderSuppressionTimer1` float, `Cm_ladderSuppressionTimer2` float, `Cm_lastLadderNormal1` float, `Cm_lastLadderNormal2` float, `Cm_lastLadderNormal3` float, `Cm_lastLadderPos1` float, `Cm_lastLadderPos2` float, `Cm_lastLadderPos3` float, `Cm_afButtonDisabled` int, `Cm_afButtonForced` int, UNIQUE KEY `unique_index` (`map`,`auth`,`style`)) ENGINE=INNODB;");
 		SQL_TQuery(g_hSavesDB, SQL_InitSavesDB, sQuery);
 	}
 
@@ -126,13 +128,14 @@ public void SQL_InitSavesDB(Handle owner, Handle hndl, const char[] error, any d
 void GetClientSaves(int client)
 {
 	char sQuery[255];
-	FormatEx(sQuery, sizeof(sQuery), "SELECT `style`, `TfCurrentTime` FROM `saves` WHERE auth = %i AND map = '%s';", GetSteamAccountID(client), g_sCurrentMap);
+	FormatEx(sQuery, sizeof(sQuery), "SELECT `map`, `style`, `TfCurrentTime`, `date` FROM `saves` WHERE auth = %i;", GetSteamAccountID(client), g_sCurrentMap);
 	SQL_TQuery(g_hSavesDB, SQL_GetClientSaves, sQuery, client);
 }
 
 public void SQL_GetClientSaves(Handle owner, Handle hndl, const char[] error, int client)
 {
 	g_bHasAnySaves[client] = false;
+	g_bHasCurrentMapSaves[client] = false;
 	g_bNotified[client] = false;
 	for(int i = 0; i <= g_iStyleCount; i++)
 	{
@@ -143,49 +146,97 @@ public void SQL_GetClientSaves(Handle owner, Handle hndl, const char[] error, in
 	if(SQL_GetRowCount(hndl) != 0)
 	{
 		g_bHasAnySaves[client] = true;
+
+		char sMap[255];
 		while(SQL_FetchRow(hndl))
 		{
-			int iStyle = SQL_FetchInt(hndl, 0);
-			float fTime = SQL_FetchFloat(hndl, 1);
-			g_bHasSave[client][iStyle] = true;
-			g_fSaveTime[client][iStyle] = fTime;
+			SQL_FetchString(hndl, 0, sMap, sizeof(sMap));
+			int iStyle = SQL_FetchInt(hndl, 1);
+
+			if(StrEqual(sMap, g_sCurrentMap))
+			{
+				g_bHasCurrentMapSaves[client] = true;
+				g_bHasSave[client][iStyle] = true;
+				g_fSaveTime[client][iStyle] = SQL_FetchFloat(hndl, 2);
+				g_iSaveDate[client][iStyle] = SQL_FetchInt(hndl, 3);
+			}
 		}
 	}
 }
 
 public void Shavit_OnRestart(int client, int track)
 {
-	if(g_bHasAnySaves[client] && !g_bNotified[client])
+	if(g_bHasCurrentMapSaves[client] && !g_bNotified[client])
 	{
-		Shavit_PrintToChat(client, "You have a saved game on this map! Load it with %s!loadgame", g_sChatStrings.sVariable);
+		Shavit_PrintToChat(client, "You have a saved game on this map! Load it with %s!savestate", g_sChatStrings.sVariable);
 		g_bNotified[client] = true;
 	}
 }
 
-public Action Command_SaveGame(int client, int args)
+public Action Command_Savestate(int client, int args)
 {
-	if(client == 0)
-		return Plugin_Handled;
+	if(client != 0)
+		OpenSavestateMenu(client);
+	return Plugin_Handled;
+}
 
-	if(Shavit_GetClientTrack(client) != 0)
+void OpenSavestateMenu(int client)
+{
+	Menu menu = new Menu(OpenSavestateMenuHandler);
+	menu.SetTitle("Savestates Menu\n ");
+
+	menu.AddItem("save", "Save Current Timer", Shavit_GetTimerStatus(client) == Timer_Stopped ? ITEMDRAW_DISABLED : ITEMDRAW_DEFAULT);
+	menu.AddItem("load", "Load Timer Save\n ", g_bHasCurrentMapSaves[client] ? ITEMDRAW_DEFAULT: ITEMDRAW_DISABLED);
+	menu.AddItem("view", "View All Saves", g_bHasAnySaves[client] ? ITEMDRAW_DEFAULT: ITEMDRAW_DISABLED);
+
+	menu.ExitButton = true;
+	menu.Display(client, MENU_TIME_FOREVER);
+}
+
+public int OpenSavestateMenuHandler(Menu menu, MenuAction action, int param1, int param2)
+{
+	if(action == MenuAction_Select)
 	{
-		Shavit_PrintToChat(client, "Did %sNOT %ssave your game. This feature is for the %smain %strack only", g_sChatStrings.sWarning, g_sChatStrings.sText, g_sChatStrings.sVariable, g_sChatStrings.sText);
-		return Plugin_Handled;
-	}
+		char s[8];
+		menu.GetItem(param2, s, sizeof(s));
 
-	if(!Shavit_CanPause(client) || Shavit_IsPaused(client))
-	{
-		int iStyle = Shavit_GetBhopStyle(client);
+		if(StrEqual(s, "save"))
+		{
+			if(Shavit_GetClientTrack(param1) != 0)
+			{
+				Shavit_PrintToChat(param1, "Did %sNOT %ssave your game. This feature is for the %smain %strack only", g_sChatStrings.sWarning, g_sChatStrings.sText, g_sChatStrings.sVariable, g_sChatStrings.sText);
+				OpenSavestateMenu(param1);
+			}
+			else if(!Shavit_CanPause(param1) || Shavit_IsPaused(param1))
+			{
+				int iStyle = Shavit_GetBhopStyle(param1);
 
-		if(g_bHasSave[client][iStyle])
-			OpenOverwriteSaveMenu(client, iStyle);
+				if(g_bHasSave[param1][iStyle])
+					OpenOverwriteSaveMenu(param1, iStyle);
 
+				else
+					SaveGame(param1, iStyle);
+			}
+			else
+			{
+				Shavit_PrintToChat(param1, "Did %sNOT %ssave your game. Your timer must be %spaused%s, or pause conditions must be met! (alive, not moving, uncrouched, etc.)", g_sChatStrings.sWarning, g_sChatStrings.sText, g_sChatStrings.sVariable, g_sChatStrings.sText);
+				OpenSavestateMenu(param1);
+			}
+		}
+		else if(StrEqual(s, "load"))
+		{
+			OpenLoadGameMenu(param1);
+		}
+		else if(StrEqual(s, "view"))
+		{
+			OpenViewSavesMenu(param1);
+		}
 		else
-			SaveGame(client, iStyle);
+		{
+			Shavit_PrintToChat(param1, "Invalid selection, please try again");
+			OpenSavestateMenu(param1);
+		}
 	}
-	else
-		Shavit_PrintToChat(client, "Did %sNOT %ssave your game. Your timer must be %spaused%s, or pause conditions must be met! (alive, not moving, uncrouched, etc.)", g_sChatStrings.sWarning, g_sChatStrings.sText, g_sChatStrings.sVariable, g_sChatStrings.sText);
-
 	return Plugin_Handled;
 }
 
@@ -194,34 +245,39 @@ public void SaveGame(int client, int style)
 	if(style != Shavit_GetBhopStyle(client) || Shavit_GetClientTrack(client) != 0)
 		return;
 
-	char sPath[PLATFORM_MAX_PATH];
-	FormatEx(sPath, sizeof(sPath), "%s/savedgames/%s_%i_%i.replay", g_sReplayFolder, g_sCurrentMap, style, GetSteamAccountID(client));
+	Shavit_SaveCheckpointCache(client, client, g_aSavestates[client], -1, sizeof(g_aSavestates[client]));
+	g_aSavestates[client].iPreFrames = Shavit_GetPlayerPreFrames(client); //this is needed until https://github.com/shavitush/bhoptimer/pull/1244 is addressed, but might only be used if we save a replay, idk. i'll leave it here to be safe
 
-	File fFile = null;
-	if(!(fFile = OpenFile(sPath, "wb+")))
-		LogError("Failed to open savegame replay file for writing. ('%s')", sPath);
-
-	ArrayList ReplayFrames = Shavit_GetReplayData(client);
-	int iSize = Shavit_GetClientFrameCount(client);
 	float fZoneOffset[2];
 	fZoneOffset[0] = g_aSavestates[client].aSnapshot.fZoneOffset[0];
 	fZoneOffset[1] = g_aSavestates[client].aSnapshot.fZoneOffset[1];
 
-	Shavit_SaveCheckpointCache(client, client, g_aSavestates[client], -1, sizeof(g_aSavestates[client]));
-	g_aSavestates[client].iPreFrames = Shavit_GetPlayerPreFrames(client);
+	//if time is under wr, save replay frames to file
+	if(Shavit_GetWorldRecord(style, 0) == 0.0 || g_aSavestates[client].aSnapshot.fCurrentTime < Shavit_GetWorldRecord(style, 0))
+	{
+		char sPath[PLATFORM_MAX_PATH];
+		FormatEx(sPath, sizeof(sPath), "%s/savedgames/%s_%i_%i.replay", g_sReplayFolder, g_sCurrentMap, style, GetSteamAccountID(client));
+
+		File fFile = null;
+		if(!(fFile = OpenFile(sPath, "wb+")))
+		{
+			LogError("Failed to open savegame replay file for writing. Permissions issue? ('%s')", sPath);
+			Shavit_PrintToChat(client, "Did %sNOT%s save your game due to file permissions error, tell an admin to check the logs!", g_sChatStrings.sWarning, g_sChatStrings.sText);
+			return;
+		}
+
+		ArrayList ReplayFrames = Shavit_GetReplayData(client);
+		int iSize = Shavit_GetClientFrameCount(client);
+
+		WriteReplayHeader(fFile, style, 0, g_aSavestates[client].aSnapshot.fCurrentTime, GetSteamAccountID(client), g_aSavestates[client].iPreFrames, 0, fZoneOffset, iSize, g_fTickrate, g_sCurrentMap);
+		WriteReplayFrames(ReplayFrames, iSize, fFile, null);
+		delete fFile;
+		delete ReplayFrames;
+	}
 	
-	Shavit_ClearCheckpoints(client);
-
-	WriteReplayHeader(fFile, style, 0, g_aSavestates[client].aSnapshot.fCurrentTime, GetSteamAccountID(client), g_aSavestates[client].iPreFrames, 0, fZoneOffset, iSize, g_fTickrate, g_sCurrentMap);
-	WriteReplayFrames(ReplayFrames, iSize, fFile, null);
-	delete fFile;
-	delete ReplayFrames;
-
-	Shavit_StopTimer(client, true);
-
 	char sQuery[8192];
-	FormatEx(sQuery, sizeof(sQuery), "REPLACE INTO `saves` (`map`, `auth`, `style`, `TbTimerEnabled`, `TfCurrentTime`, `TbClientPaused`, `TiJumps`, `TiStrafes`, `TiTotalMeasures`, `TiGoodGains`, `TfServerTime`, `TiKeyCombo`, `TiTimerTrack`, `TiMeasuredJumps`, `TiPerfectJumps`, `TfZoneOffset1`, `TfZoneOffset2`, `TfDistanceOffset1`, `TfDistanceOffset2`, `TfAvgVelocity`, `TfMaxVelocity`, `TfTimescale`, `TiZoneIncrement`, `TiFullTicks`, `TiFractionalTicks`, `TbPracticeMode`, `TbJumped`, `TbCanUseAllKeys`, `TbOnGround`, `TiLastButtons`, `TfLastAngle`, `TiLandingTick`, `TiLastMoveType`, `TfStrafeWarning`, `TfLastInputVel1`, `TfLastInputVel2`, `Tfplayer_speedmod`, `TfNextFrameTime`, `TiLastMoveTypeTAS`, `CfPosition1`, `CfPosition2`, `CfPosition3`, `CfAngles1`, `CfAngles2`, `CfAngles3`, `CfVelocity1`, `CfVelocity2`, `CfVelocity3`, `CiMovetype`, `CfGravity`, `CfSpeed`, `CfStamina`, `CbDucked`, `CbDucking`, `CfDuckTime`, `CfDuckSpeed`, `CiFlags`, `CsTargetname`, `CsClassname`, `CiPreFrames`, `CbSegmented`, `CiGroundEntity`, `CvecLadderNormal1`, `CvecLadderNormal2`, `CvecLadderNormal3`, `Cm_bHasWalkMovedSinceLastJump`, `Cm_ignoreLadderJumpTime`, `Cm_lastStandingPos1`, `Cm_lastStandingPos2`, `Cm_lastStandingPos3`, `Cm_ladderSuppressionTimer1`, `Cm_ladderSuppressionTimer2`,  `Cm_lastLadderNormal1`, `Cm_lastLadderNormal2`, `Cm_lastLadderNormal3`, `Cm_lastLadderPos1`, `Cm_lastLadderPos2`, `Cm_lastLadderPos3`, `Cm_afButtonDisabled`, `Cm_afButtonForced`) VALUES ('%s', '%i', '%i', '%i', '%f', '%i', '%i', '%i', '%i', '%i', '%f', '%i', '%i', '%i', '%i', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%f', '%i', '%i', '%f', '%f', '%f', '%f', '%f', '%i', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%i', '%f', '%f', '%f', '%i', '%i', '%f', '%f', '%i', '%s', '%s', '%i', '%i', '%i', '%f', '%f', '%f', '%i', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%i', '%i');",
-		g_sCurrentMap, GetSteamAccountID(client), g_aSavestates[client].aSnapshot.bsStyle, view_as<int>(g_aSavestates[client].aSnapshot.bTimerEnabled), g_aSavestates[client].aSnapshot.fCurrentTime, view_as<int>(g_aSavestates[client].aSnapshot.bClientPaused), g_aSavestates[client].aSnapshot.iJumps,
+	FormatEx(sQuery, sizeof(sQuery), "REPLACE INTO `saves` (`map`, `auth`, `style`, `date`, `TbTimerEnabled`, `TfCurrentTime`, `TbClientPaused`, `TiJumps`, `TiStrafes`, `TiTotalMeasures`, `TiGoodGains`, `TfServerTime`, `TiKeyCombo`, `TiTimerTrack`, `TiMeasuredJumps`, `TiPerfectJumps`, `TfZoneOffset1`, `TfZoneOffset2`, `TfDistanceOffset1`, `TfDistanceOffset2`, `TfAvgVelocity`, `TfMaxVelocity`, `TfTimescale`, `TiZoneIncrement`, `TiFullTicks`, `TiFractionalTicks`, `TbPracticeMode`, `TbJumped`, `TbCanUseAllKeys`, `TbOnGround`, `TiLastButtons`, `TfLastAngle`, `TiLandingTick`, `TiLastMoveType`, `TfStrafeWarning`, `TfLastInputVel1`, `TfLastInputVel2`, `Tfplayer_speedmod`, `TfNextFrameTime`, `TiLastMoveTypeTAS`, `CfPosition1`, `CfPosition2`, `CfPosition3`, `CfAngles1`, `CfAngles2`, `CfAngles3`, `CfVelocity1`, `CfVelocity2`, `CfVelocity3`, `CiMovetype`, `CfGravity`, `CfSpeed`, `CfStamina`, `CbDucked`, `CbDucking`, `CfDuckTime`, `CfDuckSpeed`, `CiFlags`, `CsTargetname`, `CsClassname`, `CiPreFrames`, `CbSegmented`, `CiGroundEntity`, `CvecLadderNormal1`, `CvecLadderNormal2`, `CvecLadderNormal3`, `Cm_bHasWalkMovedSinceLastJump`, `Cm_ignoreLadderJumpTime`, `Cm_lastStandingPos1`, `Cm_lastStandingPos2`, `Cm_lastStandingPos3`, `Cm_ladderSuppressionTimer1`, `Cm_ladderSuppressionTimer2`,  `Cm_lastLadderNormal1`, `Cm_lastLadderNormal2`, `Cm_lastLadderNormal3`, `Cm_lastLadderPos1`, `Cm_lastLadderPos2`, `Cm_lastLadderPos3`, `Cm_afButtonDisabled`, `Cm_afButtonForced`) VALUES ('%s', '%i', '%i', '%i', '%i', '%f', '%i', '%i', '%i', '%i', '%i', '%f', '%i', '%i', '%i', '%i', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%i', '%f', '%i', '%i', '%f', '%f', '%f', '%f', '%f', '%i', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%i', '%f', '%f', '%f', '%i', '%i', '%f', '%f', '%i', '%s', '%s', '%i', '%i', '%i', '%f', '%f', '%f', '%i', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%f', '%i', '%i');",
+		g_sCurrentMap, GetSteamAccountID(client), g_aSavestates[client].aSnapshot.bsStyle, GetTime(), view_as<int>(g_aSavestates[client].aSnapshot.bTimerEnabled), g_aSavestates[client].aSnapshot.fCurrentTime, view_as<int>(g_aSavestates[client].aSnapshot.bClientPaused), g_aSavestates[client].aSnapshot.iJumps,
 		g_aSavestates[client].aSnapshot.iStrafes, g_aSavestates[client].aSnapshot.iTotalMeasures, g_aSavestates[client].aSnapshot.iGoodGains, g_aSavestates[client].aSnapshot.fServerTime, g_aSavestates[client].aSnapshot.iKeyCombo, g_aSavestates[client].aSnapshot.iTimerTrack, 
 		g_aSavestates[client].aSnapshot.iMeasuredJumps, g_aSavestates[client].aSnapshot.iPerfectJumps, g_aSavestates[client].aSnapshot.fZoneOffset[0], g_aSavestates[client].aSnapshot.fZoneOffset[1], 
 		g_aSavestates[client].aSnapshot.fDistanceOffset[0], g_aSavestates[client].aSnapshot.fDistanceOffset[1], g_aSavestates[client].aSnapshot.fAvgVelocity, 
@@ -252,15 +308,19 @@ public void SQL_SaveGame(Handle owner, Handle hndl, const char[] error, any clie
 {
 	if(hndl == INVALID_HANDLE)
 	{
+		char sPath[PLATFORM_MAX_PATH];
+		FormatEx(sPath, sizeof(sPath), "%s/savedgames/%s_%i_%i.replay", g_sReplayFolder, g_sCurrentMap, Shavit_GetBhopStyle(client), GetSteamAccountID(client));
+		if(FileExists(sPath))
+			DeleteFile(sPath);
+
 		LogError("SQL_SaveGame() query failed! %s", error);
 		Shavit_PrintToChat(client, "Did %sNOT %ssave your game. Database error, try again or tell an admin!", g_sChatStrings.sWarning, g_sChatStrings.sText);
-		
-		Shavit_LoadCheckpointCache(client, g_aSavestates[client], -1, sizeof(g_aSavestates[client]), true);
 	}
 	else
 	{
+		Shavit_StopTimer(client, true);
 		GetClientSaves(client);
-		Shavit_PrintToChat(client, "Timer saved! Load your save on this map later with %s!loadgame", g_sChatStrings.sVariable);
+		Shavit_PrintToChat(client, "Timer saved! Load your save on this map later with %s!savestate", g_sChatStrings.sVariable);
 	}
 }
 
@@ -269,15 +329,15 @@ public Action OpenOverwriteSaveMenu(int client, int style)
 	Panel hPanel = CreatePanel();
 	char sDisplay[128];
 	char sTime[32];
-	FormatSeconds(g_fSaveTime[client][style], sTime, sizeof(sTime), false);
+	FloatToString(g_fSaveTime[client][style], sTime, sizeof(sTime));
 
-	FormatEx(sDisplay, sizeof(sDisplay), "You have a saved game on %s", g_sCurrentMap);
+	FormatEx(sDisplay, sizeof(sDisplay), "You already have a saved game on %s", g_sCurrentMap);
 	hPanel.SetTitle(sDisplay);
 
 	FormatEx(sDisplay, sizeof(sDisplay), "Style: %s", g_sStyleStrings[style].sStyleName);
 	hPanel.DrawItem(sDisplay, ITEMDRAW_RAWLINE);
 
-	FormatEx(sDisplay, sizeof(sDisplay), "Time: %s", sTime);
+	FormatEx(sDisplay, sizeof(sDisplay), "Time: %s", FormatToSeconds(sTime));
 	hPanel.DrawItem(sDisplay, ITEMDRAW_RAWLINE);
 
 	hPanel.DrawItem(" ", ITEMDRAW_RAWLINE);
@@ -327,6 +387,7 @@ public int OpenOverwriteSaveMenuHandler(Handle hPanel, MenuAction action, int cl
 				{
 					if(IsValidClient(client))
 						EmitSoundToClient(client, "buttons/button14.wav");
+						OpenSavestateMenu(client);
 				}
 				case 10:
 				{
@@ -334,27 +395,10 @@ public int OpenOverwriteSaveMenuHandler(Handle hPanel, MenuAction action, int cl
 						EmitSoundToClient(client, "buttons/combine_button7.wav");
 				}
 			}
-			Shavit_PrintToChat(client, "Did %sNOT %ssave your game. Load your current save with %s!loadgame", g_sChatStrings.sWarning, g_sChatStrings.sText, g_sChatStrings.sVariable);
+			Shavit_PrintToChat(client, "Did %sNOT %ssave your game. Load your current save with %s!savestate", g_sChatStrings.sWarning, g_sChatStrings.sText, g_sChatStrings.sVariable);
 		}
 	}
 	CloseHandle(hPanel);
-	return Plugin_Handled;
-}
-
-public Action Command_LoadGame(int client, int args)
-{
-	if(!IsValidClient(client))
-		ReplyToCommand(client, "This command may only be performed in game");
-
-	else if(!g_bHasAnySaves[client])
-		Shavit_PrintToChat(client, "No saved games found on this map, try again later");
-
-	else if(!IsPlayerAlive(client))
-		Shavit_PrintToChat(client, "You must be %salive %sto load a saved game", g_sChatStrings.sVariable, g_sChatStrings.sText);
-
-	else
-		OpenLoadGameMenu(client);
-
 	return Plugin_Handled;
 }
 
@@ -366,6 +410,7 @@ void OpenLoadGameMenu(int client)
 	int iStyle;
 	char sStyleID[4];
 	char sTime[32];
+	char sDate[32];
 	char sDisplay[128];
 
 	FormatEx(sDisplay, sizeof(sDisplay), "%s\nChoose a save to load\n ", g_sCurrentMap);
@@ -377,12 +422,14 @@ void OpenLoadGameMenu(int client)
 		if(g_bHasSave[client][iStyle])
 		{
 			IntToString(iStyle, sStyleID, sizeof(sStyleID));
-			FormatSeconds(g_fSaveTime[client][iStyle], sTime, sizeof(sTime), false);
-			FormatEx(sDisplay, sizeof(sDisplay), "%s - %s", g_sStyleStrings[iStyle].sStyleName, sTime);
+			FloatToString(g_fSaveTime[client][iStyle], sTime, sizeof(sTime));
+			FormatTime(sDate, sizeof(sDate), "%d %b %Y", g_iSaveDate[client][iStyle]);
+			FormatEx(sDisplay, sizeof(sDisplay), "%s\n    Time: %s (%s)\n ", g_sStyleStrings[iStyle].sStyleName, FormatToSeconds(sTime), sDate);
 			menu.AddItem(sStyleID, sDisplay);
 		}
 	}
 
+	menu.ExitBackButton = true;
 	menu.ExitButton = true;
 	menu.Display(client, MENU_TIME_FOREVER);
 }
@@ -391,6 +438,13 @@ public int OpenLoadGameMenuHandler(Menu menu, MenuAction action, int param1, int
 {
 	if(action == MenuAction_Select)
 	{
+		if(!IsPlayerAlive(param1))
+		{
+			Shavit_PrintToChat(param1, "You must be %salive %sto load a saved game", g_sChatStrings.sVariable, g_sChatStrings.sText);
+			OpenLoadGameMenu(param1);
+			return Plugin_Handled;
+		}
+
 		char sStyleID[4];
 		menu.GetItem(param2, sStyleID, sizeof(sStyleID));
 		int iStyleID = StringToInt(sStyleID);
@@ -404,6 +458,10 @@ public int OpenLoadGameMenuHandler(Menu menu, MenuAction action, int param1, int
 			OpenLoadGameMenu(param1);
 		}
 	}
+	if(action == MenuAction_Cancel)
+		if(param2 == MenuCancel_ExitBack)
+			OpenSavestateMenu(param1);
+
 	return Plugin_Handled;
 }
 
@@ -415,13 +473,15 @@ public void LoadGame(int client, int style)
 	char sPath[PLATFORM_MAX_PATH];
 	FormatEx(sPath, sizeof(sPath), "%s/savedgames/%s_%i_%i.replay", g_sReplayFolder, g_sCurrentMap, style, GetSteamAccountID(client));
 
-	LoadReplayCache(g_aReplayCache[client], style, 0, sPath, g_sCurrentMap);
-
 	if(FileExists(sPath))
-		DeleteFile(sPath);
-
-	Shavit_ClearCheckpoints(client);
-	Shavit_StopTimer(client, true);
+	{
+		if(!LoadReplayCache(g_aReplayCache[client], style, 0, sPath, g_sCurrentMap))
+		{
+			LogError("Saved game replay failed to load! (%s)", sPath);
+			Shavit_PrintToChat(client, "Could %sNOT %sload your game. Replay file unable to be loaded, try again or tell an admin!", g_sChatStrings.sWarning, g_sChatStrings.sText);
+			return;
+		}
+	}
 
 	char sQuery[2048];
 	FormatEx(sQuery, sizeof(sQuery), "SELECT `style`, `TbTimerEnabled`, `TfCurrentTime`, `TbClientPaused`, `TiJumps`, `TiStrafes`, `TiTotalMeasures`, `TiGoodGains`, `TfServerTime`, `TiKeyCombo`, `TiTimerTrack`, `TiMeasuredJumps`, `TiPerfectJumps`, `TfZoneOffset1`, `TfZoneOffset2`, `TfDistanceOffset1`, `TfDistanceOffset2`, `TfAvgVelocity`, `TfMaxVelocity`, `TfTimescale`, `TiZoneIncrement`, `TiFullTicks`, `TiFractionalTicks`, `TbPracticeMode`, `TbJumped`, `TbCanUseAllKeys`, `TbOnGround`, `TiLastButtons`, `TfLastAngle`, `TiLandingTick`, `TiLastMoveType`, `TfStrafeWarning`, `TfLastInputVel1`, `TfLastInputVel2`, `Tfplayer_speedmod`, `TfNextFrameTime`, `TiLastMoveTypeTAS`, `CfPosition1`, `CfPosition2`, `CfPosition3`, `CfAngles1`, `CfAngles2`, `CfAngles3`, `CfVelocity1`, `CfVelocity2`, `CfVelocity3`, `CiMovetype`, `CfGravity`, `CfSpeed`, `CfStamina`, `CbDucked`, `CbDucking`, `CfDuckTime`, `CfDuckSpeed`, `CiFlags`, `CsTargetname`, `CsClassname`, `CiPreFrames`, `CbSegmented`, `CiGroundEntity`, `CvecLadderNormal1`, `CvecLadderNormal2`, `CvecLadderNormal3`, `Cm_bHasWalkMovedSinceLastJump`, `Cm_ignoreLadderJumpTime`, `Cm_lastStandingPos1`, `Cm_lastStandingPos2`, `Cm_lastStandingPos3`, `Cm_ladderSuppressionTimer1`, `Cm_ladderSuppressionTimer2`, `Cm_lastLadderNormal1`, `Cm_lastLadderNormal2`, `Cm_lastLadderNormal3`, `Cm_lastLadderPos1`, `Cm_lastLadderPos2`, `Cm_lastLadderPos3`, `Cm_afButtonDisabled`, `Cm_afButtonForced` FROM `saves` WHERE `map` = '%s' AND `auth` = %i AND `style` = %i;", g_sCurrentMap, GetSteamAccountID(client), style);
@@ -438,11 +498,15 @@ public void SQL_LoadGame(Handle owner, Handle hndl, const char[] error, any clie
 	else
 	{
 		if(SQL_GetRowCount(hndl) < 1)
+		{
+			LogError("SQL_LoadGame() query returned 0 rows!");
 			Shavit_PrintToChat(client, "Could %sNOT %sload your game. No saved game found on this style, try again or tell an admin!", g_sChatStrings.sWarning, g_sChatStrings.sText);
-
+		}
 		else if(SQL_GetRowCount(hndl) > 1) //this shouldn't be able to happen.. but better to catch it here just in case (^:
+		{
+			LogError("SQL_LoadGame() query returned >1 row!");
 			Shavit_PrintToChat(client, "Could %sNOT %sload your game. More than one saved game found on this style, try again or tell an admin!", g_sChatStrings.sWarning, g_sChatStrings.sText);
-
+		}
 		else
 		{
 			int iStyle;
@@ -527,11 +591,12 @@ public void SQL_LoadGame(Handle owner, Handle hndl, const char[] error, any clie
 				g_aSavestates[client].m_afButtonDisabled = SQL_FetchInt(hndl, 76);
 				g_aSavestates[client].m_afButtonForced = SQL_FetchInt(hndl, 77);
 			}
-			//TODO: if Shavit_SetReplayData is called before Shavit_LoadCheckpointCache, then it will run Shavit_SetPlayerPreFrames.. re-order these and test
-			Shavit_LoadCheckpointCache(client, g_aSavestates[client], -1, sizeof(g_aSavestates[client]), true);
-			Shavit_ChangeClientStyle(client, iStyle, true, false, true);
+			Shavit_ClearCheckpoints(client);
+			Shavit_StopTimer(client, true);
 			Shavit_SetReplayData(client, g_aReplayCache[client].aFrames);
 			Shavit_SetPlayerPreFrames(client, g_aReplayCache[client].iPreFrames);
+			Shavit_LoadCheckpointCache(client, g_aSavestates[client], -1, sizeof(g_aSavestates[client]), true);
+			Shavit_ChangeClientStyle(client, iStyle, true, false, true);
 			DeleteLoadedGame(client, iStyle);
 			Shavit_PrintToChat(client, "Saved game %sloaded %ssuccessfully and deleted!", g_sChatStrings.sVariable, g_sChatStrings.sText);
 		}
@@ -540,6 +605,11 @@ public void SQL_LoadGame(Handle owner, Handle hndl, const char[] error, any clie
 
 void DeleteLoadedGame(int client, int iStyle)
 {
+	char sPath[PLATFORM_MAX_PATH];
+	FormatEx(sPath, sizeof(sPath), "%s/savedgames/%s_%i_%i.replay", g_sReplayFolder, g_sCurrentMap, iStyle, GetSteamAccountID(client));
+	if(FileExists(sPath))
+		DeleteFile(sPath);
+		
 	char sQuery[512];
 	FormatEx(sQuery, sizeof(sQuery), "DELETE FROM `saves` WHERE auth = %i AND map = '%s' AND style = %i;", GetSteamAccountID(client), g_sCurrentMap, iStyle);
 	SQL_TQuery(g_hSavesDB, SQL_DeleteLoadedGame, sQuery, client);
@@ -554,4 +624,120 @@ public void SQL_DeleteLoadedGame(Handle owner, Handle hndl, const char[] error, 
 	}
 	else
 		GetClientSaves(client);
+}
+
+void OpenViewSavesMenu(int client)
+{
+	char sQuery[512];
+	FormatEx(sQuery, sizeof(sQuery), "SELECT `map`, `style`, `TfCurrentTime`, `date` FROM `saves` WHERE auth = %i ORDER BY `date` DESC;", GetSteamAccountID(client));
+	SQL_TQuery(g_hSavesDB, SQL_OpenViewSavesMenu, sQuery, client);
+}
+
+void SQL_OpenViewSavesMenu(Handle owner, Handle hndl, const char[] error, int client)
+{
+	if(SQL_GetRowCount(hndl) == 0)
+	{
+		Shavit_PrintToChat(client, "No saves found");
+		OpenSavestateMenu(client);
+		return;
+	}
+
+	Menu menu = new Menu(OpenViewSavesMenuHandler);
+	menu.SetTitle("All Savestates\n ");
+
+	char sMap[255];
+	int iStyle;
+	char sStyle[4];
+	float fTime;
+	char sTime[32];
+	int iDate;
+	char sDate[32];
+	char sDisplay[255];
+	while(SQL_FetchRow(hndl))
+	{
+		SQL_FetchString(hndl, 0, sMap, sizeof(sMap));
+		iStyle = SQL_FetchInt(hndl, 1);
+		fTime = SQL_FetchFloat(hndl, 2);
+		iDate = SQL_FetchInt(hndl, 3);
+
+		IntToString(iStyle, sStyle, sizeof(sStyle));
+		FloatToString(fTime, sTime, sizeof(sTime));
+		FormatTime(sDate, sizeof(sDate), "%d %b %Y", iDate);
+
+		FormatEx(sDisplay, sizeof(sDisplay), "%s - %s\n    Time: %s (%s)\n ", sMap, g_sStyleStrings[iStyle].sStyleName, FormatToSeconds(sTime), sDate);
+		menu.AddItem(sStyle, sDisplay, StrEqual(g_sCurrentMap, sMap) ? ITEMDRAW_DEFAULT : ITEMDRAW_DISABLED);
+	}
+
+	menu.ExitBackButton = true;
+	menu.ExitButton = true;
+	menu.Display(client, MENU_TIME_FOREVER);
+}
+
+public int OpenViewSavesMenuHandler(Menu menu, MenuAction action, int param1, int param2)
+{
+	if(action == MenuAction_Select)
+	{
+		if(!IsPlayerAlive(param1))
+		{
+			Shavit_PrintToChat(param1, "You must be %salive %sto load a saved game", g_sChatStrings.sVariable, g_sChatStrings.sText);
+			OpenLoadGameMenu(param1);
+			return Plugin_Handled;
+		}
+
+		char sStyle[4];
+		menu.GetItem(param2, sStyle, sizeof(sStyle));
+		int iStyle = StringToInt(sStyle);
+
+		if(iStyle > -1 && iStyle <= g_iStyleCount)
+			LoadGame(param1, iStyle);
+
+		else
+		{
+			Shavit_PrintToChat(param1, "Invalid style, please try again");
+			OpenLoadGameMenu(param1);
+		}
+	}
+	if(action == MenuAction_Cancel)
+		if(param2 == MenuCancel_ExitBack)
+			OpenSavestateMenu(param1);
+	return Plugin_Handled;
+}
+
+char[] FormatToSeconds(char time[32])
+{
+	int iTemp = RoundToFloor(StringToFloat(time));
+	int iHours = 0;
+
+	if(iTemp > 3600)
+	{
+		iHours = iTemp / 3600;
+		iTemp %= 3600;
+	}
+
+	int iMinutes = 0;
+
+	if(iTemp >= 60)
+	{
+		iMinutes = iTemp / 60;
+		iTemp %= 60;
+	}
+
+	float fSeconds = iTemp + StringToFloat(time) - RoundToFloor(StringToFloat(time));
+
+	char result[32];
+
+	if (iHours > 0)
+	{
+		Format(result, sizeof(result), "%ih %im %.1fs", iHours, iMinutes, fSeconds);
+	}
+	else if(iMinutes > 0)
+	{
+		Format(result, sizeof(result), "%im %.1fs", iMinutes, fSeconds);
+	}
+	else
+	{
+		Format(result, sizeof(result), "%.1fs", fSeconds);
+	}
+
+	return result;
 }
