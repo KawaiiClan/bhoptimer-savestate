@@ -1,4 +1,5 @@
 #include <sourcemod>
+#include <convar_class>
 #include <sdktools>
 #include <shavit>
 #include <shavit/replay-file>
@@ -26,6 +27,8 @@ float g_fSaveTime[MAXPLAYERS+1][STYLE_LIMIT];
 int g_iSaveDate[MAXPLAYERS+1][STYLE_LIMIT];
 bool g_bNotified[MAXPLAYERS+1];
 
+ConVar g_cvSaveReplayOverWR = null;
+
 public Plugin myinfo =
 {
 	name = "[shavit] Savestate",
@@ -47,6 +50,8 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_loadgame", Command_Savestate, "Save or load a timer state");
 	RegConsoleCmd("sm_loadtimer", Command_Savestate, "Save or load a timer state");
 	
+	g_cvSaveReplayOverWR = new Convar("shavit_savestate_savereplayoverwr", "0", "Whether or not to save replay frames if player's time is longer than the WR", 0, true, 0.0, true, 1.0);
+	Convar.AutoExecConfig();
 
 	if(g_bLate)
 	{
@@ -253,7 +258,7 @@ public void SaveGame(int client, int style)
 	fZoneOffset[1] = g_aSavestates[client].aSnapshot.fZoneOffset[1];
 
 	//if time is under wr, save replay frames to file
-	if(Shavit_GetWorldRecord(style, 0) == 0.0 || g_aSavestates[client].aSnapshot.fCurrentTime < Shavit_GetWorldRecord(style, 0))
+	if(g_cvSaveReplayOverWR.BoolValue || Shavit_GetWorldRecord(style, 0) == 0.0 || g_aSavestates[client].aSnapshot.fCurrentTime < Shavit_GetWorldRecord(style, 0))
 	{
 		char sPath[PLATFORM_MAX_PATH];
 		FormatEx(sPath, sizeof(sPath), "%s/savedgames/%s_%i_%i.replay", g_sReplayFolder, g_sCurrentMap, style, GetSteamAccountID(client));
