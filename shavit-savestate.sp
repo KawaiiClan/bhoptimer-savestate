@@ -744,10 +744,10 @@ void SQL_LoadCustomData(Handle owner, Handle hndl, const char[] error, int clien
 				SQL_FetchString(hndl, 1, sValue, sizeof(sValue));
 				g_aSavestates[client].customdata.SetValue("mpbhops_punishtime", StringToFloat(sValue));
 			}
-			else if(StrEqual(sKey, "mpbhops_punishtime"))
+			else if(StrEqual(sKey, "mpbhops_lastblock"))
 			{
 				SQL_FetchString(hndl, 1, sValue, sizeof(sValue));
-				g_aSavestates[client].customdata.SetValue("mpbhops_lastblock", StringToFloat(sValue));
+				g_aSavestates[client].customdata.SetValue("mpbhops_lastblock", StringToInt(sValue));
 			}
 		}
 	}
