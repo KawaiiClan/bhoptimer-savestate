@@ -11,7 +11,7 @@ If you run multiple servers from the same directory (ie. public and private serv
 
 ## Installation
 - Create an entry for "savegame" in `/addons/sourcemod/configs/databases.cfg`
-- Load the plugin to create the database structure automatically (only one `saves` table, many columns)
+- Load the plugin to create the database structure automatically
 
 ## ConVars
 - `shavit_savestate_savereplayoverwr` (0 / 1) - Whether or not to save replay frames if player's time is longer than the WR (useful with things like !myreplay)
