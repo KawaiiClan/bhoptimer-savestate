@@ -5,6 +5,9 @@
 #include <shavit/replay-file>
 #include <shavit/replay-stocks.sp>
 
+#undef REQUIRE_PLUGIN
+#include <eventqueuefix>
+
 #pragma newdecls required
 #pragma semicolon 1
 
@@ -120,6 +123,12 @@ public Action InitSavesDB(Handle &DbHNDL)
 		char sQuery[4096];
 		FormatEx(sQuery, sizeof(sQuery), "CREATE TABLE IF NOT EXISTS `saves` (`map` varchar(100) NOT NULL, `auth` int NOT NULL, `style` int NOT NULL, `date` int NOT NULL, `TbTimerEnabled` int NOT NULL, `TfCurrentTime` float NOT NULL, `TbClientPaused` int NOT NULL, `TiJumps` int NOT NULL, `TiStrafes` int NOT NULL, `TiTotalMeasures` int, `TiGoodGains` int, `TfServerTime` int NOT NULL, `TiKeyCombo` int NOT NULL, `TiTimerTrack` int NOT NULL, `TiMeasuredJumps` int, `TiPerfectJumps` int, `TfZoneOffset1` float, `TfZoneOffset2` float, `TfDistanceOffset1` float, `TfDistanceOffset2` float, `TfAvgVelocity` float, `TfMaxVelocity` float, `TfTimescale` float NOT NULL, `TiZoneIncrement` int, `TiFullTicks` int NOT NULL, `TiFractionalTicks` int NOT NULL, `TbPracticeMode` int NOT NULL, `TbJumped` int NOT NULL, `TbCanUseAllKeys` int NOT NULL, `TbOnGround` int NOT NULL, `TiLastButtons` int, `TfLastAngle` float, `TiLandingTick` int, `TiLastMoveType` int, `TfStrafeWarning` float, `TfLastInputVel1` float, `TfLastInputVel2` float, `Tfplayer_speedmod` float, `TfNextFrameTime` float, `TiLastMoveTypeTAS` int, `CfPosition1` float NOT NULL, `CfPosition2` float NOT NULL, `CfPosition3` float NOT NULL, `CfAngles1` float NOT NULL, `CfAngles2` float NOT NULL, `CfAngles3` float NOT NULL, `CfVelocity1` float NOT NULL, `CfVelocity2` float NOT NULL, `CfVelocity3` float NOT NULL, `CiMovetype` int NOT NULL, `CfGravity` float NOT NULL, `CfSpeed` float NOT NULL, `CfStamina` float NOT NULL, `CbDucked` int NOT NULL, `CbDucking` int NOT NULL, `CfDuckTime` float, `CfDuckSpeed` float, `CiFlags` int NOT NULL, `CsTargetname` varchar(64) NOT NULL, `CsClassname` varchar(64) NOT NULL, `CiPreFrames` int NOT NULL, `CbSegmented` int NOT NULL, `CiGroundEntity` int, `CvecLadderNormal1` float, `CvecLadderNormal2` float, `CvecLadderNormal3` float, `Cm_bHasWalkMovedSinceLastJump` int, `Cm_ignoreLadderJumpTime` float, `Cm_lastStandingPos1` float, `Cm_lastStandingPos2` float, `Cm_lastStandingPos3` float, `Cm_ladderSuppressionTimer1` float, `Cm_ladderSuppressionTimer2` float, `Cm_lastLadderNormal1` float, `Cm_lastLadderNormal2` float, `Cm_lastLadderNormal3` float, `Cm_lastLadderPos1` float, `Cm_lastLadderPos2` float, `Cm_lastLadderPos3` float, `Cm_afButtonDisabled` int, `Cm_afButtonForced` int, UNIQUE KEY `unique_index` (`map`,`auth`,`style`)) ENGINE=INNODB;");
 		SQL_TQuery(g_hSavesDB, SQL_InitSavesDB, sQuery);
+		
+		FormatEx(sQuery, sizeof(sQuery), "CREATE TABLE IF NOT EXISTS `saves-events` (`type` varchar(16) NOT NULL, `id` int NOT NULL, `map` varchar(100) NOT NULL, `auth` int NOT NULL, `style` int NOT NULL, `Etarget` varchar(64), `EtargetInput` varchar(64), `EvariantValue` varchar(512), `Edelay` float, `Eactivator` int, `Ecaller` int, `EoutputID` int, `EwaitTime` float, UNIQUE KEY `unique_index` (`type`, `id`, `map`, `auth`,`style`)) ENGINE=INNODB;");
+		SQL_TQuery(g_hSavesDB, SQL_InitSavesDB, sQuery);
+		
+		FormatEx(sQuery, sizeof(sQuery), "CREATE TABLE IF NOT EXISTS `saves-customdata` (`id` int NOT NULL, `map` varchar(100) NOT NULL, `auth` int NOT NULL, `style` int NOT NULL, `key` varchar(64) NOT NULL, `value` varchar(64) NOT NULL, UNIQUE KEY `unique_index` (`id`, `map`,`auth`,`style`)) ENGINE=INNODB;");
+		SQL_TQuery(g_hSavesDB, SQL_InitSavesDB, sQuery);
 	}
 
 	return Plugin_Handled;
@@ -128,7 +137,13 @@ public Action InitSavesDB(Handle &DbHNDL)
 public void SQL_InitSavesDB(Handle owner, Handle hndl, const char[] error, any data)
 {
 	if(hndl == INVALID_HANDLE)
-		LogError("Database initialization query failed! %s", error);
+		SetFailState("Database initialization query failed! %s", error);
+}
+
+public void SQL_GeneralCallback(Handle owner, Handle hndl, const char[] error, any data)
+{
+	if(hndl == INVALID_HANDLE)
+		LogError("Query failed! %s", error);
 }
 
 void GetClientSaves(int client)
@@ -253,10 +268,60 @@ public void SaveGame(int client, int style)
 
 	Shavit_SaveCheckpointCache(client, client, g_aSavestates[client], -1, sizeof(g_aSavestates[client]));
 	g_aSavestates[client].iPreFrames = Shavit_GetPlayerPreFrames(client); //this is needed until https://github.com/shavitush/bhoptimer/pull/1244 is addressed, but might only be used if we save a replay, idk. i'll leave it here to be safe
-
 	float fZoneOffset[2];
 	fZoneOffset[0] = g_aSavestates[client].aSnapshot.fZoneOffset[0];
 	fZoneOffset[1] = g_aSavestates[client].aSnapshot.fZoneOffset[1];
+
+	//if there are eventqueuefix events
+	if(g_aSavestates[client].aEvents != null && g_aSavestates[client].aOutputWaits != null)
+	{
+		//clear db
+		char sQuery[2048];
+		FormatEx(sQuery, sizeof(sQuery), "DELETE FROM `saves-events` WHERE `map` = '%s' AND `auth` = %i AND `style` = %i;", g_sCurrentMap, GetSteamAccountID(client), style);
+		SQL_TQuery(g_hSavesDB, SQL_GeneralCallback, sQuery);
+
+		//events
+		for(int i = 0; i < g_aSavestates[client].aEvents.Length; i++)
+		{
+			event_t e;
+			g_aSavestates[client].aEvents.GetArray(i, e);
+			FormatEx(sQuery, sizeof(sQuery), "INSERT INTO `saves-events` (`type`, `id`, `map`, `auth`, `style`, `Etarget`, `EtargetInput`, `EvariantValue`, `Edelay`, `Eactivator`, `Ecaller`, `EoutputID`) VALUES ('event', '%i', '%s', '%s', '%s', '%f', '%i', '%i', '%i');", i, g_sCurrentMap, GetSteamAccountID(client), style, e.target, e.targetInput, e.variantValue, e.delay, e.activator, e.caller, e.outputID);
+			SQL_TQuery(g_hSavesDB, SQL_GeneralCallback, sQuery);
+		}
+
+		//outputwaits
+		for(int i = 0; i < g_aSavestates[client].aOutputWaits.Length; i++)
+		{
+			entity_t e;
+			g_aSavestates[client].aOutputWaits.GetArray(i, e);
+			FormatEx(sQuery, sizeof(sQuery), "INSERT INTO `saves-events` (`type`, `id`, `map`, `auth`, `style`, `Ecaller`, `EwaitTime`) VALUES ('output', '%i', '%s', '%i', '%i', '%i', '%f');", i, g_sCurrentMap, GetSteamAccountID(client), style, e.caller, e.waitTime);
+			SQL_TQuery(g_hSavesDB, SQL_GeneralCallback, sQuery);
+		}
+	}
+	
+	//customdata (mpbhops)
+	if(g_aSavestates[client].customdata != null)
+	{
+		//clear db
+		char sQuery[1024];
+		FormatEx(sQuery, sizeof(sQuery), "DELETE FROM `saves-customdata` WHERE `map` = '%s' AND `auth` = %i AND `style` = %i;", g_sCurrentMap, GetSteamAccountID(client), style);
+		SQL_TQuery(g_hSavesDB, SQL_GeneralCallback, sQuery);
+
+		float fPunishTime;
+		int iLastBlock;
+		if(g_aSavestates[client].customdata.ContainsKey("mpbhops_punishtime"))
+			g_aSavestates[client].customdata.GetValue("mpbhops_punishtime", fPunishTime);
+		if(g_aSavestates[client].customdata.ContainsKey("mpbhops_lastblock"))
+			g_aSavestates[client].customdata.GetValue("mpbhops_lastblock", iLastBlock);
+
+		char sPunishTime[64];
+		char sLastBlock[64];
+		FloatToString(fPunishTime, sPunishTime, sizeof(sPunishTime));
+		IntToString(iLastBlock, sLastBlock, sizeof(sLastBlock));
+
+		FormatEx(sQuery, sizeof(sQuery), "INSERT INTO `saves-customdata` (`id`, `map`, `auth`, `style`, `key`, `value`) VALUES ('0', '%s', '%i', '%i', 'mpbhops_punishtime', '%s'), ('1', '%s', '%i', '%i', 'mpbhops_lastblock', '%s');", g_sCurrentMap, GetSteamAccountID(client), style, sPunishTime, g_sCurrentMap, GetSteamAccountID(client), style, sLastBlock);
+		SQL_TQuery(g_hSavesDB, SQL_GeneralCallback, sQuery);
+	}
 
 	//if time is under wr, save replay frames to file
 	if(g_cvSaveReplayOverWR.BoolValue || Shavit_GetWorldRecord(style, 0) == 0.0 || g_aSavestates[client].aSnapshot.fCurrentTime < Shavit_GetWorldRecord(style, 0))
@@ -603,10 +668,87 @@ public void SQL_LoadGame(Handle owner, Handle hndl, const char[] error, any clie
 			if(g_aReplayCache[client].aFrames)
 				Shavit_SetReplayData(client, g_aReplayCache[client].aFrames);
 			Shavit_SetPlayerPreFrames(client, g_aReplayCache[client].iPreFrames);
+			LoadEvents(client, iStyle);
+			LoadCustomData(client, iStyle);
 			Shavit_LoadCheckpointCache(client, g_aSavestates[client], -1, sizeof(g_aSavestates[client]), true);
 			Shavit_ChangeClientStyle(client, iStyle, true, false, true);
 			DeleteLoadedGame(client, iStyle);
 			Shavit_PrintToChat(client, "Saved game %sloaded %ssuccessfully and deleted!", g_sChatStrings.sVariable, g_sChatStrings.sText);
+		}
+	}
+}
+
+void LoadEvents(int client, int iStyle)
+{
+	char sQuery[2048];
+	FormatEx(sQuery, sizeof(sQuery), "SELECT `type`, `id`, `Etarget`, `EtargetInput`, `EvariantValue`, `Edelay`, `Eactivator`, `Ecaller`, `EoutputID`, `EwaitTime` FROM `saves-events` WHERE `map` = '%s' AND `auth` = '%i' AND `style` = '%i' ORDER BY `id` ASC;", g_sCurrentMap, GetSteamAccountID(client), iStyle);
+	SQL_TQuery(g_hSavesDB, SQL_LoadEvents, sQuery, client);
+}
+
+void SQL_LoadEvents(Handle owner, Handle hndl, const char[] error, int client)
+{
+	if(SQL_GetRowCount(hndl) != 0)
+	{
+		g_aSavestates[client].aEvents = new ArrayList(sizeof(event_t));
+		g_aSavestates[client].aOutputWaits = new ArrayList(sizeof(entity_t));
+
+		char sType[16];
+		int iID;
+
+		while(SQL_FetchRow(hndl))
+		{
+			SQL_FetchString(hndl, 0, sType, sizeof(sType));
+			if(StrEqual(sType, "event"))
+			{
+				event_t e;
+				iID = SQL_FetchInt(hndl, 1);
+				SQL_FetchString(hndl, 2, e.target, sizeof(e.target));
+				SQL_FetchString(hndl, 3, e.targetInput, sizeof(e.targetInput));
+				SQL_FetchString(hndl, 4, e.variantValue, sizeof(e.variantValue));
+				e.delay = SQL_FetchFloat(hndl, 5);
+				e.activator = SQL_FetchInt(hndl, 6);
+				e.caller = SQL_FetchInt(hndl, 7);
+				e.outputID = SQL_FetchInt(hndl, 8);
+				g_aSavestates[client].aEvents.SetArray(iID, e);
+			}
+			else if(StrEqual(sType, "output"))
+			{
+				entity_t e;
+				iID = SQL_FetchInt(hndl, 1);
+				e.caller = SQL_FetchInt(hndl, 7);
+				e.waitTime = SQL_FetchFloat(hndl, 9);
+				g_aSavestates[client].aOutputWaits.SetArray(iID, e);
+			}
+		}
+	}
+}
+
+void LoadCustomData(int client, int iStyle)
+{
+	char sQuery[2048];
+	FormatEx(sQuery, sizeof(sQuery), "SELECT `key`, `value` FROM `saves-customdata` WHERE `map` = '%s' AND `auth` = '%i' AND `style` = '%i' ORDER BY `id` ASC;", g_sCurrentMap, GetSteamAccountID(client), iStyle);
+	SQL_TQuery(g_hSavesDB, SQL_LoadCustomData, sQuery, client);
+}
+
+void SQL_LoadCustomData(Handle owner, Handle hndl, const char[] error, int client)
+{
+	if(SQL_GetRowCount(hndl) != 0)
+	{
+		char sKey[64];
+		char sValue[64];
+		while(SQL_FetchRow(hndl))
+		{
+			SQL_FetchString(hndl, 0, sKey, sizeof(sKey));
+			if(StrEqual(sKey, "mpbhops_punishtime"))
+			{
+				SQL_FetchString(hndl, 1, sValue, sizeof(sValue));
+				g_aSavestates[client].customdata.SetValue("mpbhops_punishtime", StringToFloat(sValue));
+			}
+			else if(StrEqual(sKey, "mpbhops_punishtime"))
+			{
+				SQL_FetchString(hndl, 1, sValue, sizeof(sValue));
+				g_aSavestates[client].customdata.SetValue("mpbhops_lastblock", StringToFloat(sValue));
+			}
 		}
 	}
 }
@@ -617,10 +759,16 @@ void DeleteLoadedGame(int client, int iStyle)
 	FormatEx(sPath, sizeof(sPath), "%s/savedgames/%s_%i_%i.replay", g_sReplayFolder, g_sCurrentMap, iStyle, GetSteamAccountID(client));
 	if(FileExists(sPath))
 		DeleteFile(sPath);
-		
+
 	char sQuery[512];
 	FormatEx(sQuery, sizeof(sQuery), "DELETE FROM `saves` WHERE auth = %i AND map = '%s' AND style = %i;", GetSteamAccountID(client), g_sCurrentMap, iStyle);
 	SQL_TQuery(g_hSavesDB, SQL_DeleteLoadedGame, sQuery, client);
+
+	FormatEx(sQuery, sizeof(sQuery), "DELETE FROM `saves-events` WHERE auth = %i AND map = '%s' AND style = %i;", GetSteamAccountID(client), g_sCurrentMap, iStyle);
+	SQL_TQuery(g_hSavesDB, SQL_GeneralCallback, sQuery, client);
+
+	FormatEx(sQuery, sizeof(sQuery), "DELETE FROM `saves-customdata` WHERE auth = %i AND map = '%s' AND style = %i;", GetSteamAccountID(client), g_sCurrentMap, iStyle);
+	SQL_TQuery(g_hSavesDB, SQL_GeneralCallback, sQuery, client);
 }
 
 public void SQL_DeleteLoadedGame(Handle owner, Handle hndl, const char[] error, int client)
