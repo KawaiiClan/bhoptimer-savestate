@@ -681,7 +681,7 @@ public void SQL_LoadGame(Handle owner, Handle hndl, const char[] error, any clie
 void LoadEvents(int client, int iStyle)
 {
 	char sQuery[2048];
-	FormatEx(sQuery, sizeof(sQuery), "SELECT `type`, `id`, `Etarget`, `EtargetInput`, `EvariantValue`, `Edelay`, `Eactivator`, `Ecaller`, `EoutputID`, `EwaitTime` FROM `saves-events` WHERE `map` = '%s' AND `auth` = '%i' AND `style` = '%i' ORDER BY `id` ASC;", g_sCurrentMap, GetSteamAccountID(client), iStyle);
+	FormatEx(sQuery, sizeof(sQuery), "SELECT `type`, `Etarget`, `EtargetInput`, `EvariantValue`, `Edelay`, `Eactivator`, `Ecaller`, `EoutputID`, `EwaitTime` FROM `saves-events` WHERE `map` = '%s' AND `auth` = '%i' AND `style` = '%i' ORDER BY `id` ASC;", g_sCurrentMap, GetSteamAccountID(client), iStyle);
 	SQL_TQuery(g_hSavesDB, SQL_LoadEvents, sQuery, client);
 }
 
@@ -693,7 +693,6 @@ void SQL_LoadEvents(Handle owner, Handle hndl, const char[] error, int client)
 		g_aSavestates[client].aOutputWaits = new ArrayList(sizeof(entity_t));
 
 		char sType[16];
-		int iID;
 
 		while(SQL_FetchRow(hndl))
 		{
@@ -701,23 +700,21 @@ void SQL_LoadEvents(Handle owner, Handle hndl, const char[] error, int client)
 			if(StrEqual(sType, "event"))
 			{
 				event_t e;
-				iID = SQL_FetchInt(hndl, 1);
-				SQL_FetchString(hndl, 2, e.target, sizeof(e.target));
-				SQL_FetchString(hndl, 3, e.targetInput, sizeof(e.targetInput));
-				SQL_FetchString(hndl, 4, e.variantValue, sizeof(e.variantValue));
-				e.delay = SQL_FetchFloat(hndl, 5);
-				e.activator = SQL_FetchInt(hndl, 6);
-				e.caller = SQL_FetchInt(hndl, 7);
-				e.outputID = SQL_FetchInt(hndl, 8);
-				g_aSavestates[client].aEvents.SetArray(iID, e);
+				SQL_FetchString(hndl, 1, e.target, sizeof(e.target));
+				SQL_FetchString(hndl, 2, e.targetInput, sizeof(e.targetInput));
+				SQL_FetchString(hndl, 3, e.variantValue, sizeof(e.variantValue));
+				e.delay = SQL_FetchFloat(hndl, 4);
+				e.activator = SQL_FetchInt(hndl, 5);
+				e.caller = SQL_FetchInt(hndl, 6);
+				e.outputID = SQL_FetchInt(hndl, 7);
+				g_aSavestates[client].aEvents.Push(e);
 			}
 			else if(StrEqual(sType, "output"))
 			{
 				entity_t e;
-				iID = SQL_FetchInt(hndl, 1);
-				e.caller = SQL_FetchInt(hndl, 7);
-				e.waitTime = SQL_FetchFloat(hndl, 9);
-				g_aSavestates[client].aOutputWaits.SetArray(iID, e);
+				e.caller = SQL_FetchInt(hndl, 6);
+				e.waitTime = SQL_FetchFloat(hndl, 8);
+				g_aSavestates[client].aOutputWaits.Push(e);
 			}
 		}
 	}
@@ -734,21 +731,19 @@ void SQL_LoadCustomData(Handle owner, Handle hndl, const char[] error, int clien
 {
 	if(SQL_GetRowCount(hndl) != 0)
 	{
+		StringMap cd = new StringMap();
 		char sKey[64];
 		char sValue[64];
 		while(SQL_FetchRow(hndl))
 		{
 			SQL_FetchString(hndl, 0, sKey, sizeof(sKey));
+			SQL_FetchString(hndl, 1, sValue, sizeof(sValue));
 			if(StrEqual(sKey, "mpbhops_punishtime"))
-			{
-				SQL_FetchString(hndl, 1, sValue, sizeof(sValue));
-				g_aSavestates[client].customdata.SetValue("mpbhops_punishtime", StringToFloat(sValue));
-			}
+				cd.SetValue("mpbhops_punishtime", StringToFloat(sValue));
 			else if(StrEqual(sKey, "mpbhops_lastblock"))
-			{
-				SQL_FetchString(hndl, 1, sValue, sizeof(sValue));
-				g_aSavestates[client].customdata.SetValue("mpbhops_lastblock", StringToInt(sValue));
-			}
+				cd.SetValue("mpbhops_lastblock", StringToInt(sValue));
+
+			g_aSavestates[client].customdata = cd;
 		}
 	}
 }
