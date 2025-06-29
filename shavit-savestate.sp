@@ -600,7 +600,8 @@ public void SQL_LoadGame(Handle owner, Handle hndl, const char[] error, any clie
 			g_aSavestates[client].iSteamID = GetSteamAccountID(client);
 			Shavit_ClearCheckpoints(client);
 			Shavit_StopTimer(client, true);
-			Shavit_SetReplayData(client, g_aReplayCache[client].aFrames);
+			if(g_aReplayCache[client].aFrames)
+				Shavit_SetReplayData(client, g_aReplayCache[client].aFrames);
 			Shavit_SetPlayerPreFrames(client, g_aReplayCache[client].iPreFrames);
 			Shavit_LoadCheckpointCache(client, g_aSavestates[client], -1, sizeof(g_aSavestates[client]), true);
 			Shavit_ChangeClientStyle(client, iStyle, true, false, true);
