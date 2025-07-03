@@ -266,6 +266,9 @@ public void SaveGame(int client, int style)
 	if(style != Shavit_GetBhopStyle(client) || Shavit_GetClientTrack(client) != 0)
 		return;
 
+	if(Shavit_GetTimerStatus(client) == Timer_Paused)
+		Shavit_ResumeTimer(client, true);
+
 	Shavit_SaveCheckpointCache(client, client, g_aSavestates[client], -1, sizeof(g_aSavestates[client]));
 	g_aSavestates[client].iPreFrames = Shavit_GetPlayerPreFrames(client); //this is needed until https://github.com/shavitush/bhoptimer/pull/1244 is addressed, but might only be used if we save a replay, idk. i'll leave it here to be safe
 	float fZoneOffset[2];
@@ -629,7 +632,7 @@ public void SQL_LoadGame(Handle owner, Handle hndl, const char[] error, any clie
 				g_aSavestates[client].fVelocity[0] = SQL_FetchFloat(hndl, 43);
 				g_aSavestates[client].fVelocity[1] = SQL_FetchFloat(hndl, 44);
 				g_aSavestates[client].fVelocity[2] = SQL_FetchFloat(hndl, 45);
-				g_aSavestates[client].iMoveType = view_as<MoveType>(SQL_FetchInt(hndl, 46));
+				g_aSavestates[client].iMoveType = MOVETYPE_WALK;//view_as<MoveType>(SQL_FetchInt(hndl, 46));
 				g_aSavestates[client].fGravity = SQL_FetchFloat(hndl, 47);
 				g_aSavestates[client].fSpeed = SQL_FetchFloat(hndl, 48);
 				g_aSavestates[client].fStamina = SQL_FetchFloat(hndl, 49);
