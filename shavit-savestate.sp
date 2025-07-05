@@ -677,6 +677,8 @@ public void SQL_LoadGame(Handle owner, Handle hndl, const char[] error, any clie
 			Shavit_ChangeClientStyle(client, iStyle, true, false, true);
 			if(Shavit_GetTimerStatus(client) == Timer_Paused)
 				Shavit_ResumeTimer(client);
+			if(Shavit_GetStyleSettingBool(iStyle, "kzcheckpoints") || Shavit_GetStyleSettingBool(iStyle, "segments"))
+				Shavit_SaveCheckpoint(client);
 			DeleteLoadedGame(client, iStyle);
 			Shavit_PrintToChat(client, "Saved game %sloaded %ssuccessfully and deleted!", g_sChatStrings.sVariable, g_sChatStrings.sText);
 		}
