@@ -668,13 +668,13 @@ public void SQL_LoadGame(Handle owner, Handle hndl, const char[] error, any clie
 			g_aSavestates[client].iSteamID = GetSteamAccountID(client);
 			Shavit_ClearCheckpoints(client);
 			Shavit_StopTimer(client, true);
+			Shavit_ChangeClientStyle(client, iStyle, true, false, true);
 			if(g_aReplayCache[client].aFrames)
 				Shavit_SetReplayData(client, g_aReplayCache[client].aFrames);
 			Shavit_SetPlayerPreFrames(client, g_aReplayCache[client].iPreFrames);
 			LoadEvents(client, iStyle);
 			LoadCustomData(client, iStyle);
 			Shavit_LoadCheckpointCache(client, g_aSavestates[client], -1, sizeof(g_aSavestates[client]), true);
-			Shavit_ChangeClientStyle(client, iStyle, true, false, true);
 			if(Shavit_GetTimerStatus(client) == Timer_Paused)
 				Shavit_ResumeTimer(client);
 			if(Shavit_GetStyleSettingBool(iStyle, "kzcheckpoints") || Shavit_GetStyleSettingBool(iStyle, "segments"))
@@ -801,7 +801,7 @@ void SQL_OpenViewSavesMenu(Handle owner, Handle hndl, const char[] error, int cl
 	}
 
 	Menu menu = new Menu(OpenViewSavesMenuHandler);
-	menu.SetTitle("All Savestates\n ");
+	menu.SetTitle("All Savestates (Select to nominate)\n ");
 
 	char sMap[255];
 	int iStyle;
@@ -823,7 +823,7 @@ void SQL_OpenViewSavesMenu(Handle owner, Handle hndl, const char[] error, int cl
 		FormatTime(sDate, sizeof(sDate), "%d %b %Y", iDate);
 
 		FormatEx(sDisplay, sizeof(sDisplay), "%s - %s\n    Time: %s (%s)\n ", sMap, g_sStyleStrings[iStyle].sStyleName, FormatToSeconds(sTime), sDate);
-		menu.AddItem(sStyle, sDisplay, StrEqual(g_sCurrentMap, sMap) ? ITEMDRAW_DEFAULT : ITEMDRAW_DISABLED);
+		menu.AddItem(sMap, sDisplay, StrEqual(g_sCurrentMap, sMap) ? ITEMDRAW_DISABLED : ITEMDRAW_DEFAULT);
 	}
 
 	menu.ExitBackButton = true;
@@ -835,25 +835,9 @@ public int OpenViewSavesMenuHandler(Menu menu, MenuAction action, int param1, in
 {
 	if(action == MenuAction_Select)
 	{
-		if(!IsPlayerAlive(param1))
-		{
-			Shavit_PrintToChat(param1, "You must be %salive %sto load a saved game", g_sChatStrings.sVariable, g_sChatStrings.sText);
-			OpenLoadGameMenu(param1);
-			return Plugin_Handled;
-		}
-
-		char sStyle[4];
-		menu.GetItem(param2, sStyle, sizeof(sStyle));
-		int iStyle = StringToInt(sStyle);
-
-		if(iStyle > -1 && iStyle <= g_iStyleCount)
-			LoadGame(param1, iStyle);
-
-		else
-		{
-			Shavit_PrintToChat(param1, "Invalid style, please try again");
-			OpenLoadGameMenu(param1);
-		}
+		char sMap[PLATFORM_MAX_PATH];
+		menu.GetItem(param2, sMap, sizeof(sMap));
+		FakeClientCommand(param1, "sm_nominate %s", sMap);
 	}
 	if(action == MenuAction_Cancel)
 		if(param2 == MenuCancel_ExitBack)
