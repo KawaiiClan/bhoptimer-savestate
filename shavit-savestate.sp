@@ -288,7 +288,7 @@ public void SaveGame(int client, int style)
 		{
 			event_t e;
 			g_aSavestates[client].aEvents.GetArray(i, e);
-			FormatEx(sQuery, sizeof(sQuery), "INSERT INTO `saves-events` (`type`, `id`, `map`, `auth`, `style`, `Etarget`, `EtargetInput`, `EvariantValue`, `Edelay`, `Eactivator`, `Ecaller`, `EoutputID`) VALUES ('event', '%i', '%s', '%s', '%s', '%f', '%i', '%i', '%i');", i, g_sCurrentMap, GetSteamAccountID(client), style, e.target, e.targetInput, e.variantValue, e.delay, e.activator, e.caller, e.outputID);
+			FormatEx(sQuery, sizeof(sQuery), "INSERT INTO `saves-events` (`type`, `id`, `map`, `auth`, `style`, `Etarget`, `EtargetInput`, `EvariantValue`, `Edelay`, `Eactivator`, `Ecaller`, `EoutputID`) VALUES ('event', '%i', '%s', '%i', '%i', '%s', '%s', '%s', '%f', '%i', '%i', '%i');", i, g_sCurrentMap, GetSteamAccountID(client), style, e.target, e.targetInput, e.variantValue, e.delay, e.activator, e.caller, e.outputID);
 			SQL_TQuery(g_hSavesDB, SQL_GeneralCallback, sQuery);
 		}
 
