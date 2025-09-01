@@ -666,17 +666,15 @@ public void SQL_LoadGame(Handle owner, Handle hndl, const char[] error, any clie
 				g_aSavestates[client].m_afButtonForced = SQL_FetchInt(hndl, 77);
 			}
 			g_aSavestates[client].iSteamID = GetSteamAccountID(client);
+			g_aSavestates[client].aSnapshot.bsStyle = iStyle;
 			Shavit_ClearCheckpoints(client);
 			Shavit_StopTimer(client, true);
-			Shavit_ChangeClientStyle(client, iStyle, true, false, false);
 			if(g_aReplayCache[client].aFrames)
 				Shavit_SetReplayData(client, g_aReplayCache[client].aFrames);
 			Shavit_SetPlayerPreFrames(client, g_aReplayCache[client].iPreFrames);
 			LoadEvents(client, iStyle);
 			LoadCustomData(client, iStyle);
 			Shavit_LoadCheckpointCache(client, g_aSavestates[client], -1, sizeof(g_aSavestates[client]), true);
-			//change style again, for good measure.. (if this is uncommented, gravity (and maybe other things) will be reset due to style change, so maybe it's not good measure, but bad measure..)
-			//Shavit_ChangeClientStyle(client, iStyle, true, false, true);
 			if(Shavit_GetTimerStatus(client) == Timer_Paused)
 				Shavit_ResumeTimer(client);
 			if(Shavit_GetStyleSettingBool(iStyle, "kzcheckpoints") || Shavit_GetStyleSettingBool(iStyle, "segments"))
