@@ -741,6 +741,10 @@ void SQL_LoadCustomData(Handle owner, Handle hndl, const char[] error, int clien
 		StringMap cd = new StringMap();
 		char sKey[64];
 		char sValue[64];
+		
+		cd.SetValue("mpbhops_punishtime", 0.0);
+		cd.SetValue("mpbhops_lastblock", 0);
+
 		while(SQL_FetchRow(hndl))
 		{
 			SQL_FetchString(hndl, 0, sKey, sizeof(sKey));
