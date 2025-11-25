@@ -736,15 +736,15 @@ void LoadCustomData(int client, int iStyle)
 
 void SQL_LoadCustomData(Handle owner, Handle hndl, const char[] error, int client)
 {
+	StringMap cd = new StringMap();
+	char sKey[64];
+	char sValue[64];
+
+	cd.SetValue("mpbhops_punishtime", 0.0);
+	cd.SetValue("mpbhops_lastblock", 0);
+
 	if(SQL_GetRowCount(hndl) != 0)
 	{
-		StringMap cd = new StringMap();
-		char sKey[64];
-		char sValue[64];
-		
-		cd.SetValue("mpbhops_punishtime", 0.0);
-		cd.SetValue("mpbhops_lastblock", 0);
-
 		while(SQL_FetchRow(hndl))
 		{
 			SQL_FetchString(hndl, 0, sKey, sizeof(sKey));
@@ -753,10 +753,10 @@ void SQL_LoadCustomData(Handle owner, Handle hndl, const char[] error, int clien
 				cd.SetValue("mpbhops_punishtime", StringToFloat(sValue));
 			else if(StrEqual(sKey, "mpbhops_lastblock"))
 				cd.SetValue("mpbhops_lastblock", StringToInt(sValue));
-
-			g_aSavestates[client].customdata = cd;
 		}
 	}
+
+	g_aSavestates[client].customdata = cd;
 }
 
 void DeleteLoadedGame(int client, int iStyle)
