@@ -713,10 +713,14 @@ void LoadEvents(int client, int iStyle)
 
 void SQL_LoadEvents(Handle owner, Handle hndl, const char[] error, int client)
 {
+	ResetSavestateEventHandles(client);
+
 	if(SQL_GetRowCount(hndl) != 0)
 	{
 		g_aSavestates[client].aEvents = new ArrayList(sizeof(event_t));
 		g_aSavestates[client].aOutputWaits = new ArrayList(sizeof(entity_t));
+		for(int i = 0; i < 4; i++)
+			g_aSavestates[client].aOnUser1_4[i] = new ArrayList(sizeof(event_t));
 
 		char sType[16];
 
@@ -744,6 +748,15 @@ void SQL_LoadEvents(Handle owner, Handle hndl, const char[] error, int client)
 			}
 		}
 	}
+}
+
+void ResetSavestateEventHandles(int client)
+{
+	delete g_aSavestates[client].aEvents;
+	delete g_aSavestates[client].aOutputWaits;
+
+	for(int i = 0; i < 4; i++)
+		delete g_aSavestates[client].aOnUser1_4[i];
 }
 
 void LoadCustomData(int client, int iStyle)
