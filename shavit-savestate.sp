@@ -91,7 +91,10 @@ public void Shavit_OnStyleConfigLoaded(int styles)
 		Shavit_GetStyleStrings(i, sStyleName, g_sStyleStrings[i].sStyleName, sizeof(stylestrings_t::sStyleName));
 
 	g_iStyleCount = styles;
+}
 
+public void Shavit_OnReplaysLoaded()
+{
 	if(!Shavit_GetReplayFolderPath_Stock(g_sReplayFolder))
 		SetFailState("Could not load the replay bots' configuration file. Make sure it exists (addons/sourcemod/configs/shavit-replay.cfg) and follows the proper syntax!");
 
