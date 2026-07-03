@@ -691,6 +691,7 @@ public void SQL_LoadGame(Handle owner, Handle hndl, const char[] error, any clie
 			}
 			g_aSavestates[client].iSteamID = GetSteamAccountID(client);
 			g_aSavestates[client].aSnapshot.bsStyle = iStyle;
+			TeleportEntity(client, g_aSavestates[client].fPosition, g_aSavestates[client].fAngles, NULL_VECTOR);
 			Shavit_ClearCheckpoints(client);
 			Shavit_StopTimer(client, true);
 			if(g_aReplayCache[client].aFrames)
